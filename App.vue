@@ -22,9 +22,6 @@
     </v-app>
 </template>
 <style scoped>
-:deep() .v-icon {
-    color: #673AB7 !important;
-}
 </style>
 <script setup>
 import { ref, getCurrentInstance, onMounted } from "vue"

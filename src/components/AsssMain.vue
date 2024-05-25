@@ -7,54 +7,52 @@
                 </template>
             </v-text-field>
         </div>
-        <v-window ref="windowRef" v-else show-arrows="hover" continuous v-model="windows">
-            <v-window-item v-for="(review, index) of reviews.filter(reviewFilter)" :key="index">
-                <rating-card :review="review" />
+        <v-window ref="windowRef" v-else show-arrows="hover" continuous v-model="windows" @mouseenter="hovering = true" @mouseleave="hovering = false">
+            <v-window-item v-for="(review, index) of app.reviews.filter(reviewFilter)" :key="index">
+                <rating-card :review="review" :app="app" />
             </v-window-item>
+            <v-sheet rounded="xl" class="message text-h4 animate animate__animated pa-4" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)" :class="playStateUpdated || (hovering && !play) ? 'animate__fadeIn' : 'animate__fadeOut'">{{ play ? 'playing' : 'paused' }}</v-sheet>
         </v-window>
     </v-container>
 </template>
 <style scoped>
-.labels {
-    width: 50px;
-    margin-top: 45px;
-    margin-left: 10px;
-    position: absolute;
-    transform: rotate(45deg);
-}
-
-:deep() img[data-dz-thumbnail] {
-    width: -webkit-fill-available;
+.v-sheet {
+    background-color: rgba(255, 255, 255, 0.8);
 }
 </style>
 <script setup>
 import 'animate.css'
-import { ref, computed, onMounted, getCurrentInstance } from 'vue'
+import { ref, computed, onMounted, getCurrentInstance, watch } from 'vue'
 import { useAppStore } from '../store/app'
 import { v5 as uuidv5 } from 'uuid'
 
 import RatingCard from './RatingCard.vue'
 
+const play = ref(true)
 const windowRef = ref()
 const props = defineProps({
     auth: Object
 })
 const { $api } = getCurrentInstance().appContext.config.globalProperties
 const store = useAppStore()
-const uuid = computed(() => store.url &&uuidv5(store.url, uuidv5.URL))
-const reviews = computed(() => uuid.value && store.added[uuid.value]?.reviews || [])
+const uuid = computed(() => store.url && uuidv5(store.url, uuidv5.URL))
+const app = computed(() => uuid.value && store.added[uuid.value])
 const loading = ref(false)
 const windows = ref()
+const playStateUpdated = ref(false)
+const hovering = ref(false)
+const animationendEventListenerAdded = ref(false)
 
 async function submitHandler() {
     try {
         loading.value = true
 
-        const reviews = await $api.asss({ auth: props.auth, url: encodeURIComponent(store.url) })
+        const { appData, reviews } = await $api.asss({ auth: props.auth, url: encodeURIComponent(store.url) })
         if (reviews.length) {
             store.added[uuid.value] = {
                 url: store.url,
-                reviews
+                reviews,
+                ...appData
             }
         }
     } catch (error) {
@@ -69,9 +67,29 @@ async function submitHandler() {
 function reviewFilter(review) {
     return review.rating >= 4
 }
+function addMessageEventListener() {
+    if (animationendEventListenerAdded.value) return
+    const el = document.querySelector('.message')
+    if (!el) return
+    el.addEventListener('animationend', () => {
+        playStateUpdated.value = false
+    })
+    animationendEventListenerAdded.value = true
+}
 onMounted(() => {
     setInterval(() => {
-        windows.value += windows.value === reviews.length - 1 ? -reviews.length : 1
+        const reviews = app.value.reviews?.length
+
+        if (play.value) {
+            windows.value += windows.value === reviews - 1 ? -reviews : 1
+        }
     }, 11000)
+    addMessageEventListener()
+    document.ondblclick = e => {
+        play.value = !play.value
+        console.log('play: ', play.value)
+        playStateUpdated.value = true
+    }
+    watch(() => store.added, addMessageEventListener)
 })
 </script>
