@@ -7,16 +7,16 @@
                 </template>
             </v-text-field>
         </div>
-        <v-window ref="windowRef" v-else show-arrows="hover" continuous v-model="windows" @mouseenter="hovering = true" @mouseleave="hovering = false">
+        <v-window ref="windowRef" v-if="app?.reviews" show-arrows="hover" continuous v-model="windows" @mouseenter="hovering = true" @mouseleave="hovering = false">
             <v-window-item v-for="(review, index) of app.reviews.filter(reviewFilter)" :key="index">
                 <rating-card :review="review" :app="app" />
             </v-window-item>
             <v-sheet rounded="xl" class="message text-h4 animate animate__animated pa-4" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)" :class="playStateUpdated || (hovering && !play) ? 'animate__fadeIn' : 'animate__fadeOut'">{{ play ? 'playing' : 'paused' }}</v-sheet>
         </v-window>
-        <v-container class="d-flex flex-column align-center justify-center mt-n16 animate__animated animate__bounceInUp">
+        <v-container v-if="app?.reviews" class="d-flex flex-column align-center justify-center mt-n16 animate__animated animate__bounceInUp">
             <div class="title d-flex align-center">
                 <v-avatar size="64" class="app-logo">
-                    <v-img :src="app.logo.replace('s60', 's128')" alt="app icon" />
+                    <v-img :src="app.logo?.replace('s60', 's128')" alt="app icon" />
                 </v-avatar>
                 <div class="text-h6">{{ app.name }}</div>
             </div>
@@ -58,7 +58,7 @@ const windows = ref()
 const playStateUpdated = ref(false)
 const hovering = ref(false)
 const animationendEventListenerAdded = ref(false)
-const unfilteredReviews = computed(() => app.value.reviews.filter(reviewFilter)?.length || 0)
+const unfilteredReviews = computed(() => app.value?.reviews?.filter(reviewFilter).length || 0)
 const interval = ref()
 const embed = ref(false)
 async function submitHandler() {
@@ -105,7 +105,6 @@ onMounted(() => {
     interval.value = setInterval(() => {
         if (play.value) {
             windows.value += windows.value === unfilteredReviews.value - 1 ? -(unfilteredReviews.value - 1) : 1
-            console.log(`windows: ${windows.value} of ${unfilteredReviews.value}`)
         }
     }, 11000)
     addMessageEventListener()
