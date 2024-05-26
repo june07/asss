@@ -11,7 +11,10 @@
             <v-window-item v-for="(review, index) of app.reviews.filter(reviewFilter)" :key="index">
                 <rating-card :review="review" :app="app" />
             </v-window-item>
-            <v-sheet rounded="xl" class="message text-h4 animate animate__animated pa-4" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)" :class="playStateUpdated || (hovering && !play) ? 'animate__fadeIn' : 'animate__fadeOut'">{{ play ? 'playing' : 'paused' }}</v-sheet>
+            <!-- pausedAtLeastOnce hides the message on first load -->
+            <div v-show="pausedAtLeastOnce">
+                <v-sheet rounded="xl" class="message text-h4 animate animate__animated pa-4" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)" :class="playStateUpdated || (hovering && !play) ? 'animate__fadeIn' : 'animate__fadeOut'">{{ play ? 'playing' : 'paused' }}</v-sheet>
+            </div>
         </v-window>
         <v-container v-if="app?.reviews" class="d-flex flex-column align-center justify-center mt-n16 animate__animated animate__bounceInUp">
             <div class="title d-flex align-center">
@@ -49,6 +52,7 @@ const windowRef = ref()
 const props = defineProps({
     auth: Object
 })
+const pausedAtLeastOnce = ref(false)
 const { $api } = getCurrentInstance().appContext.config.globalProperties
 const store = useAppStore()
 const uuid = computed(() => store.url && uuidv5(store.url, uuidv5.URL))
@@ -111,6 +115,9 @@ onMounted(() => {
     document.ondblclick = e => {
         play.value = !play.value
         playStateUpdated.value = true
+        if (!pausedAtLeastOnce.value && !play.value) {
+            pausedAtLeastOnce.value = true
+        }
     }
     watch(() => store.added, addMessageEventListener)
 })
