@@ -17,7 +17,7 @@
                 <v-sheet rounded="xl" class="message text-h4 animate animate__animated pa-4" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)" :class="playStateUpdated || (hovering && !play) ? 'animate__fadeIn' : 'animate__fadeOut'">{{ play ? 'playing' : 'paused' }}</v-sheet>
             </div>
         </v-window>
-        <v-container v-if="app?.reviews" class="d-flex flex-column align-center justify-center mt-n16 animate__animated animate__bounceInUp">
+        <v-container v-if="app?.reviews" class="d-flex flex-column align-center justify-center mt-n16 animate__animated animate__bounceInDown">
             <div class="title d-flex align-center" @click="openAppStore" style="cursor: pointer">
                 <v-avatar size="64" class="app-logo">
                     <v-img :src="app.logo?.replace('s60', 's128')" alt="app icon" />
