@@ -111,10 +111,10 @@ onMounted(() => {
         submitHandler()
     }
     interval.value = setInterval(() => {
-        if (play.value) {
+        if (play.value && !hovering.value) {
             windows.value += windows.value === unfilteredReviews.value - 1 ? -(unfilteredReviews.value - 1) : 1
         }
-    }, 11000)
+    }, 5000)
     addMessageEventListener()
     document.ondblclick = e => {
         play.value = !play.value
