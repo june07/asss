@@ -18,7 +18,7 @@
             </div>
         </v-window>
         <v-container v-if="app?.reviews" class="d-flex flex-column align-center justify-center mt-n16 animate__animated animate__bounceInUp">
-            <div class="title d-flex align-center">
+            <div class="title d-flex align-center" @click="openAppStore" style="cursor: pointer">
                 <v-avatar size="64" class="app-logo">
                     <v-img :src="app.logo?.replace('s60', 's128')" alt="app icon" />
                 </v-avatar>
@@ -98,6 +98,9 @@ function addMessageEventListener() {
         playStateUpdated.value = false
     })
     animationendEventListenerAdded.value = true
+}
+function openAppStore() {
+    window.open(app.value.url, '_blank', 'noopener', 'noreferrer')
 }
 onMounted(() => {
     if (document.location.search.includes('embed')) {
