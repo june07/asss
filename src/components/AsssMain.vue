@@ -10,6 +10,7 @@
         <v-window ref="windowRef" v-if="app?.reviews" show-arrows="hover" continuous v-model="windows" @mouseenter="hovering = true" @mouseleave="hovering = false">
             <v-window-item v-for="(review, index) of app.reviews.filter(reviewFilter)" :key="index">
                 <rating-card :review="review" :app="app" />
+                <div style="position: relative; top: -64px; height: 0" class="text-caption text-center">{{ `${windows + 1} of ${app.reviews.filter(reviewFilter)?.length}` }}</div>
             </v-window-item>
             <!-- pausedAtLeastOnce hides the message on first load -->
             <div v-show="pausedAtLeastOnce">
