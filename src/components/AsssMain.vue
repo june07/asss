@@ -23,7 +23,9 @@
             <div class="subtitle d-flex align-center mt-n2">
                 <div class="ml-2 d-flex align-center">{{ app.score }}<v-icon icon="star" color="yellow" /></div>
                 <div class="ml-2">({{ app.ratings }} ratings)</div>
-                <div class="ml-2"><NumberAnimation :to="app.users" :format="num => parseInt(num)" />+ users</div>
+                <div class="ml-2">
+                    <NumberAnimation :to="app.users" :format="num => parseInt(num)" />+ users
+                </div>
             </div>
         </v-container>
     </v-container>
@@ -38,7 +40,7 @@ import 'animate.css'
 import { ref, computed, onMounted, onBeforeUnmount, getCurrentInstance, watch } from 'vue'
 import { useAppStore } from '../store/app'
 import { v5 as uuidv5 } from 'uuid'
-import NumberAnimation from "vue-number-animation";
+import NumberAnimation from "vue-number-animation"
 
 import RatingCard from './RatingCard.vue'
 
@@ -58,6 +60,7 @@ const hovering = ref(false)
 const animationendEventListenerAdded = ref(false)
 const unfilteredReviews = computed(() => app.value.reviews.filter(reviewFilter)?.length || 0)
 const interval = ref()
+const embed = ref(false)
 async function submitHandler() {
     try {
         loading.value = true
@@ -92,6 +95,9 @@ function addMessageEventListener() {
     animationendEventListenerAdded.value = true
 }
 onMounted(() => {
+    if (document.location.search.includes('embed')) {
+        embed.value = true
+    }
     if (document.location.search.includes('url')) {
         store.url = decodeURIComponent(new URLSearchParams(document.location.search).get('url'))
         submitHandler()
