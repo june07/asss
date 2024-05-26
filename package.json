@@ -17,6 +17,7 @@
     "vite": "^5.2.8",
     "vite-plugin-vuetify": "^2.0.3",
     "vue": "^3.4.23",
+    "vue-number-animation": "^2.0.2",
     "vue-social-sharing": "^4.0.0-alpha4",
     "vuetify": "^3.5.17"
   },

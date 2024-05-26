@@ -1,6 +1,6 @@
 <template>
     <v-container fluid>
-        <div v-if="!store.added[uuid]">
+        <div v-if="!store.added[uuid] && !embed">
             <v-text-field variant="outlined" v-model="store.url" hide-details="auto" persistent-hint label="Web Store Reviews URL">
                 <template v-slot:append-inner>
                     <v-btn @click="submitHandler" text="add" flat variant="tonal" :loading="loading" />
@@ -13,6 +13,19 @@
             </v-window-item>
             <v-sheet rounded="xl" class="message text-h4 animate animate__animated pa-4" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)" :class="playStateUpdated || (hovering && !play) ? 'animate__fadeIn' : 'animate__fadeOut'">{{ play ? 'playing' : 'paused' }}</v-sheet>
         </v-window>
+        <v-container class="d-flex flex-column align-center justify-center mt-n16 animate__animated animate__bounceInUp">
+            <div class="title d-flex align-center">
+                <v-avatar size="64" class="app-logo">
+                    <v-img :src="app.logo.replace('s60', 's128')" alt="app icon" />
+                </v-avatar>
+                <div class="text-h6">{{ app.name }}</div>
+            </div>
+            <div class="subtitle d-flex align-center mt-n2">
+                <div class="ml-2 d-flex align-center">{{ app.score }}<v-icon icon="star" color="yellow" /></div>
+                <div class="ml-2">({{ app.ratings }} ratings)</div>
+                <div class="ml-2"><NumberAnimation :to="app.users" :format="num => parseInt(num)" />+ users</div>
+            </div>
+        </v-container>
     </v-container>
 </template>
 <style scoped>
@@ -22,9 +35,10 @@
 </style>
 <script setup>
 import 'animate.css'
-import { ref, computed, onMounted, getCurrentInstance, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, getCurrentInstance, watch } from 'vue'
 import { useAppStore } from '../store/app'
 import { v5 as uuidv5 } from 'uuid'
+import NumberAnimation from "vue-number-animation";
 
 import RatingCard from './RatingCard.vue'
 
@@ -42,7 +56,8 @@ const windows = ref()
 const playStateUpdated = ref(false)
 const hovering = ref(false)
 const animationendEventListenerAdded = ref(false)
-
+const unfilteredReviews = computed(() => app.value.reviews.filter(reviewFilter)?.length || 0)
+const interval = ref()
 async function submitHandler() {
     try {
         loading.value = true
@@ -77,19 +92,24 @@ function addMessageEventListener() {
     animationendEventListenerAdded.value = true
 }
 onMounted(() => {
-    setInterval(() => {
-        const reviews = app.value.reviews?.length
-
+    if (document.location.search.includes('url')) {
+        store.url = decodeURIComponent(new URLSearchParams(document.location.search).get('url'))
+        submitHandler()
+    }
+    interval.value = setInterval(() => {
         if (play.value) {
-            windows.value += windows.value === reviews - 1 ? -reviews : 1
+            windows.value += windows.value === unfilteredReviews.value - 1 ? -(unfilteredReviews.value - 1) : 1
+            console.log(`windows: ${windows.value} of ${unfilteredReviews.value}`)
         }
     }, 11000)
     addMessageEventListener()
     document.ondblclick = e => {
         play.value = !play.value
-        console.log('play: ', play.value)
         playStateUpdated.value = true
     }
     watch(() => store.added, addMessageEventListener)
+})
+onBeforeUnmount(() => {
+    clearInterval(interval.value)
 })
 </script>
