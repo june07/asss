@@ -8,7 +8,7 @@
             </v-card-subtitle>
             <v-card-text class="text-body-1 pt-1">
                 <div class="d-flex align-center">{{ review.rating }} out of 5
-                    <v-rating v-model="rating" half-increments density="compact" class="ml-2" active-color="yellow" color="yellow-darken-1" />
+                    <v-rating v-model="rating" half-increments density="compact" class="ml-2" active-color="yellow" color="yellow-accent-2" />
                     <v-avatar size="64" class="app-logo">
                         <v-img :src="app.logo.replace('s60', 's128')" alt="app icon" />
                     </v-avatar>
