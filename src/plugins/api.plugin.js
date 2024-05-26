@@ -72,6 +72,7 @@ const apiService = () => {
             }
         },
         asss: async ({ auth, url }) => await request({ auth, url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}` }),
+        asssPublic: async ({ url }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss/public?url=${url}` }),
     }
 }
 

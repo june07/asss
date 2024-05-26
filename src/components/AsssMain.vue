@@ -66,11 +66,13 @@ const animationendEventListenerAdded = ref(false)
 const unfilteredReviews = computed(() => app.value?.reviews?.filter(reviewFilter).length || 0)
 const interval = ref()
 const embed = ref(false)
-async function submitHandler() {
+async function submitHandler(options) {
+    const { publicEndpoint } = options
+
     try {
         loading.value = true
 
-        const { appData, reviews } = await $api.asss({ auth: props.auth, url: encodeURIComponent(store.url) })
+        const { appData, reviews } = publicEndpoint ? await $api.asssPublic({ url: encodeURIComponent(store.url) }) : await $api.asss({ auth: props.auth, url: encodeURIComponent(store.url) })
         if (reviews.length) {
             store.added[uuid.value] = {
                 url: store.url,
@@ -108,7 +110,7 @@ onMounted(() => {
     }
     if (document.location.search.includes('url')) {
         store.url = decodeURIComponent(new URLSearchParams(document.location.search).get('url'))
-        submitHandler()
+        submitHandler({ publicEndpoint: true })
     }
     interval.value = setInterval(() => {
         if (play.value && !hovering.value) {
