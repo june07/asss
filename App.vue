@@ -2,7 +2,7 @@
     <v-app>
         <v-main>
             <v-container class="d-flex justify-center">
-                <asss-main :auth="auth" />
+                <asss-main v-if="authLoaded" :auth="auth" @message="messageHandler" />
             </v-container>
         </v-main>
         <v-snackbar text :timeout="-1" v-model="snackbar.active" style="opacity: 0.9" @click="snackbarCloseHandler">
@@ -43,6 +43,7 @@ const snackbar = ref({ ...snackbarDefault })
 const lastBuild = ref()
 const versionCheckIntervalId = ref()
 const buildInfo = ref()
+const authLoaded = ref(false)
 
 const checkVersion = async () => {
     buildInfo.value = await $api.buildInfo()
@@ -68,6 +69,14 @@ function snackbarCloseHandler() {
         }
     })
 }
+function messageHandler(message) {
+    debugger
+    snackbar.value = {
+        ...snackbarDefault,
+        active: true,
+        message,
+    }
+}
 function reload() {
     const url = new URL(window.location.href)
     url.searchParams.set('cache', Date.now())
@@ -75,6 +84,7 @@ function reload() {
 }
 async function doAuth(redirect) {
     await $keycloak.value.isLoaded
+    authLoaded.value = true
     if ($keycloak.value.isAuthenticated) {
         auth.value = {
             token: $keycloak.value.token,

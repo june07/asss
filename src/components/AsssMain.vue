@@ -48,6 +48,7 @@ import NumberAnimation from "vue-number-animation"
 
 import RatingCard from './RatingCard.vue'
 
+const emit = defineEmits(['message'])
 const play = ref(true)
 const windowRef = ref()
 const props = defineProps({
@@ -66,20 +67,16 @@ const animationendEventListenerAdded = ref(false)
 const unfilteredReviews = computed(() => app.value?.reviews?.filter(reviewFilter).length || 0)
 const interval = ref()
 const embed = ref(false)
-async function submitHandler(options) {
-    const { publicEndpoint } = options
-
+async function submitHandler() {
     try {
+        if (!props.auth?.token) {
+            emit('message', 'Please login to add reviews.')
+            return
+        }
         loading.value = true
 
-        const { appData, reviews } = publicEndpoint ? await $api.asssPublic({ url: encodeURIComponent(store.url) }) : await $api.asss({ auth: props.auth, url: encodeURIComponent(store.url) })
-        if (reviews.length) {
-            store.added[uuid.value] = {
-                url: store.url,
-                reviews,
-                ...appData
-            }
-        }
+        const job = await $api.asssPost({ auth: props.auth, url: encodeURIComponent(store.url) })
+        store.jobs[job.uuid] = job
     } catch (error) {
         console.error(error)
         if (/429/.test(error.response.status)) {
@@ -104,13 +101,35 @@ function addMessageEventListener() {
 function openAppStore() {
     window.open(app.value.url, '_blank', 'noopener', 'noreferrer')
 }
+async function getReviews() {
+    try {
+        const { appData, reviews } = await $api.asssGet({ url: store.url })
+        if (reviews.length) {
+            store.added[uuid.value] = {
+                url: store.url,
+                reviews,
+                ...appData
+            }
+        }
+    } catch (error) {
+        console.error(error)
+        if (/404/.test(error.response.status)) {
+            if (props.auth?.token) {
+                submitHandler()
+            }
+            console.log('Not found.')
+        } else if (/429/.test(error.response.status)) {
+            console.log('Too many requests. Please try again later.')
+        }
+    }
+}
 onMounted(() => {
     if (document.location.search.includes('embed')) {
         embed.value = true
     }
     if (document.location.search.includes('url')) {
         store.url = decodeURIComponent(new URLSearchParams(document.location.search).get('url'))
-        submitHandler({ publicEndpoint: true })
+        getReviews()
     }
     interval.value = setInterval(() => {
         if (play.value && !hovering.value) {

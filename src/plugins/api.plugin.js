@@ -71,8 +71,9 @@ const apiService = () => {
                 console.log(error)
             }
         },
-        asss: async ({ auth, url }) => await request({ auth, url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}` }),
-        asssPublic: async ({ url }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss/public?url=${url}` }),
+        asssPost: async ({ auth, url }) => await request({ auth, method: 'POST', url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}` }),
+        asssStatus: async ({ uuid }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss/status/${uuid}` }),
+        asssGet: async ({ url }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}` }),
     }
 }
 
