@@ -3,7 +3,7 @@ import { defineStore } from "pinia"
 export const useAppStore = defineStore("app", {
     state: () => ({
         url: undefined,
-        added: {},
+        appIdsToUUIDs: {},
         jobs: {}
     }),
     persist: true,

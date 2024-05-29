@@ -1,23 +1,23 @@
 <template>
-    <v-container fluid>
-        <div v-if="!store.added[uuid] && !embed">
+    <v-container fluid v-show="loaded">
+        <div v-if="loaded && !reviews?.length && !embed">
             <v-text-field variant="outlined" v-model="store.url" hide-details="auto" persistent-hint label="Web Store Reviews URL">
                 <template v-slot:append-inner>
                     <v-btn @click="submitHandler" text="add" flat variant="tonal" :loading="loading" />
                 </template>
             </v-text-field>
         </div>
-        <v-window ref="windowRef" v-if="app?.reviews" show-arrows="hover" continuous v-model="windows" @mouseenter="hovering = true" @mouseleave="hovering = false">
-            <v-window-item v-for="(review, index) of app.reviews.filter(reviewFilter)" :key="index">
+        <v-window ref="windowRef" v-if="app && reviews?.length" show-arrows="hover" continuous v-model="windows" @mouseenter="hovering = true" @mouseleave="hovering = false">
+            <v-window-item v-for="(review, index) of reviews.filter(reviewFilter)" :key="index">
                 <rating-card :review="review" :app="app" />
-                <div style="position: relative; top: -64px; height: 0" class="text-caption text-center">{{ `${windows + 1} of ${app.reviews.filter(reviewFilter)?.length}` }}</div>
+                <div style="position: relative; top: -64px; height: 0" class="text-caption text-center">{{ `${windows + 1} of ${app.totalReviews || reviews.length}` }}</div>
             </v-window-item>
             <!-- pausedAtLeastOnce hides the message on first load -->
             <div v-show="pausedAtLeastOnce">
                 <v-sheet rounded="xl" class="message text-h4 animate animate__animated pa-4" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)" :class="playStateUpdated || (hovering && !play) ? 'animate__fadeIn' : 'animate__fadeOut'">{{ play ? 'playing' : 'paused' }}</v-sheet>
             </div>
         </v-window>
-        <v-container v-if="app?.reviews" class="d-flex flex-column align-center justify-center mt-n16 animate__animated animate__bounceInDown">
+        <v-container v-if="app && reviews?.length" class="d-flex flex-column align-center justify-center mt-n16 animate__animated animate__bounceInDown">
             <div class="title d-flex align-center" @click="openAppStore" style="cursor: pointer">
                 <v-avatar size="64" class="app-logo">
                     <v-img :src="app.logo?.replace('s60', 's128')" alt="app icon" />
@@ -45,7 +45,9 @@ import { ref, computed, onMounted, onBeforeUnmount, getCurrentInstance, watch } 
 import { useAppStore } from '../store/app'
 import { v5 as uuidv5 } from 'uuid'
 import NumberAnimation from "vue-number-animation"
+import { until } from 'async'
 
+import { getAppFromDB } from '../plugins/indexedDb.plugin'
 import RatingCard from './RatingCard.vue'
 
 const emit = defineEmits(['message'])
@@ -58,14 +60,17 @@ const pausedAtLeastOnce = ref(false)
 const { $api } = getCurrentInstance().appContext.config.globalProperties
 const store = useAppStore()
 const uuid = computed(() => store.url && uuidv5(store.url, uuidv5.URL))
-const app = computed(() => uuid.value && store.added[uuid.value])
+const app = ref()
 const loading = ref(false)
+const loaded = ref(false)
+const reviews = ref([])
 const windows = ref()
 const playStateUpdated = ref(false)
 const hovering = ref(false)
 const animationendEventListenerAdded = ref(false)
-const unfilteredReviews = computed(() => app.value?.reviews?.filter(reviewFilter).length || 0)
+const unfilteredReviews = computed(() => reviews.value?.filter(reviewFilter).length || 0)
 const interval = ref()
+const limit = ref(20)
 const embed = ref(false)
 async function submitHandler() {
     try {
@@ -75,7 +80,7 @@ async function submitHandler() {
         }
         loading.value = true
 
-        const job = await $api.asssPost({ auth: props.auth, url: encodeURIComponent(store.url) })
+        const job = await $api.postApp({ auth: props.auth, url: encodeURIComponent(store.url) })
         store.jobs[job.uuid] = job
     } catch (error) {
         console.error(error)
@@ -101,41 +106,68 @@ function addMessageEventListener() {
 function openAppStore() {
     window.open(app.value.url, '_blank', 'noopener', 'noreferrer')
 }
-async function getReviews() {
+const loadReviews = async (url, uuid, index = 0) => {
+    loading.value = true
+
     try {
-        const { appData, reviews } = await $api.asssGet({ url: store.url })
-        if (reviews.length) {
-            store.added[uuid.value] = {
-                url: store.url,
-                reviews,
-                ...appData
+        let done = false
+        while (!done) {
+            const iterator = $api.chunkedReviewsIterator(url, uuid, index, limit.value, store)
+            const chunk = await iterator.next()
+
+            if (!chunk.done) {
+                if (chunk.value === 'reset') {
+                    reviews.value = []
+                    index = 0
+                } else if (chunk.value) {
+                    reviews.value.push(...chunk.value)
+                    index += limit.value
+                    await until(
+                        callback => callback(null, windows?.value && windows.value >= reviews.value.length - 10),
+                        async () => await new Promise(resolve => setTimeout(resolve))
+                    )
+                }
+            } else {
+                done = true
             }
         }
-    } catch (error) {
-        console.error(error)
-        if (/404/.test(error.response.status)) {
-            if (props.auth?.token) {
-                submitHandler()
-            }
-            console.log('Not found.')
-        } else if (/429/.test(error.response.status)) {
-            console.log('Too many requests. Please try again later.')
-        }
+
+        loading.value = false
+    } catch (err) {
+        console.error(err)
+        loading.value = false
     }
 }
-onMounted(() => {
-    if (document.location.search.includes('embed')) {
-        embed.value = true
+async function setApp() {
+    if (!uuid.value) return
+    app.value = await getAppFromDB(uuid.value)
+}
+function handleKeydown(event) {
+    if (event.key === 'ArrowRight') {
+        windows.value += 1
+    } else if (event.key === 'ArrowLeft') {
+        windows.value -= 1
     }
-    if (document.location.search.includes('url')) {
-        store.url = decodeURIComponent(new URLSearchParams(document.location.search).get('url'))
-        getReviews()
-    }
+    resetInterval()
+}
+function resetInterval() {
+    if (interval.value) clearInterval(interval.value)
     interval.value = setInterval(() => {
         if (play.value && !hovering.value) {
             windows.value += windows.value === unfilteredReviews.value - 1 ? -(unfilteredReviews.value - 1) : 1
         }
     }, 5000)
+}
+onMounted(() => {
+    setApp()
+    if (document.location.search.includes('embed')) {
+        embed.value = true
+    }
+    if (document.location.search.includes('url')) {
+        store.url = decodeURIComponent(new URLSearchParams(document.location.search).get('url'))
+        loadReviews(store.url, uuid.value)
+    }
+    resetInterval()
     addMessageEventListener()
     document.ondblclick = e => {
         play.value = !play.value
@@ -144,9 +176,20 @@ onMounted(() => {
             pausedAtLeastOnce.value = true
         }
     }
-    watch(() => store.added, addMessageEventListener)
+    document.addEventListener('keydown', handleKeydown)
+    watch(() => store.appIdsToUUIDs, addMessageEventListener)
+    watch(() => uuid.value, setApp)
+    watch(reviews.value, reviews => {
+        if (reviews?.length && !app.value) {
+            setApp()
+        }
+    })
+    setTimeout(() => {
+        loaded.value = true
+    }, 1000)
 })
 onBeforeUnmount(() => {
     clearInterval(interval.value)
+    document.removeEventListener('keydown', handleKeydown)
 })
 </script>

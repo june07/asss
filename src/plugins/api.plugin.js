@@ -1,4 +1,6 @@
 import axios from "axios"
+import { getReviewsFromDB, addReviewsToDB } from './indexedDb.plugin'
+import { setupCache, buildWebStorage } from 'axios-cache-interceptor'
 
 const {
     MODE,
@@ -12,13 +14,18 @@ const axiosInstance = axios.create({
     withCredentials: true
 })
 
+setupCache(axiosInstance, {
+    storage: buildWebStorage(localStorage, 'axios-cache')
+})
+
 const apiService = () => {
     const request = async (passedOptions) => {
-        const { auth, data, method, url, responseType } = passedOptions
+        const { auth, data, method, url, responseType, cache = false } = passedOptions
         const defaultOptions = {
             url,
             method: method || 'GET',
             responseType: responseType || 'json',
+            cache
         }
         let options = {
             ...defaultOptions,
@@ -54,6 +61,26 @@ const apiService = () => {
             throw error
         }
     }
+    const cacheless = {
+        ncPostApp: async ({ auth, url }) => await request({ auth, method: 'POST', url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}` }),
+        ncGetStatus: async ({ uuid }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss/status/${uuid}` }),
+        ncGetReviews: async ({ url, limit, offset = 0 }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}&limit=${limit || 10}&offset=${offset}` }),
+    }
+    const getReviewsCount = async ({ url }) => await request({ returnResponse: true, url: `${VITE_APP_API_SERVER}/v1/asss/count?url=${url}`, cache: true })
+    async function reFetchAllFromMongo(url, uuid, offset, limit, store) {
+        const data = await cacheless.ncGetReviews({ url, limit, offset })
+        if (data.reviews && data.reviews.length > 0) {
+            const count = await addReviewsToDB(data.appData._id, uuid, data)
+
+            if (reviewsCount === count) {
+                store.appIdsToUUIDs[data.appData._id] = uuid
+            }
+            return data.reviews
+        }
+    }
+    let reviewsInDB = 0
+    let reviewsCount
+
     return {
         request,
         buildInfo: async () => {
@@ -71,9 +98,46 @@ const apiService = () => {
                 console.log(error)
             }
         },
-        asssPost: async ({ auth, url }) => await request({ auth, method: 'POST', url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}` }),
-        asssStatus: async ({ uuid }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss/status/${uuid}` }),
-        asssGet: async ({ url }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}` }),
+        ...cacheless,
+        chunkedReviewsIterator: async function* (url, uuid, offset = 0, limit = 10, store) {
+            let moreAvailable = true
+
+            if (!reviewsCount) {
+                getReviewsCount({ url }).then(({ count }) => {
+                    reviewsCount = count
+                })
+            }
+
+            while (moreAvailable) {
+                const _id = Object.entries(store.appIdsToUUIDs).find(([_id, storedUUID]) => storedUUID === uuid)?.[0]
+
+                if (_id) {
+                    const reviewsFromDB = await getReviewsFromDB(_id, limit, offset)
+
+                    if (reviewsFromDB.length > 0) {
+                        reviewsInDB += reviewsFromDB.length
+                        yield reviewsFromDB
+                    } else {
+                        /** check mongo to make sure the count has not changed and if it has read the updates excluding all we already have.
+                         * But include the reviews that might be old... based on the timestamp
+                         */
+                        if (reviewsCount > reviewsInDB) {
+                            delete store.appIdsToUUIDs[_id]
+                            yield 'reset'
+                        }
+                        return
+                    }
+                } else {
+                    const reviews = await reFetchAllFromMongo(url, uuid, offset, limit, store)
+
+                    if (reviews?.length) {
+                        yield reviews
+                    }
+                    moreAvailable = false
+                    return
+                }
+            }
+        }
     }
 }
 

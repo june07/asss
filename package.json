@@ -10,6 +10,8 @@
     "animate.css": "^4.1.1",
     "async": "^3.2.5",
     "axios": "^1.6.8",
+    "axios-cache-interceptor": "^1.5.3",
+    "idb": "^8.0.0",
     "keycloak-js": "^24.0.4",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
