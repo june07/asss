@@ -14,9 +14,10 @@
                     </v-avatar>
                 </div>
                 <v-sheet rounded="xl" color="grey-lighten-4" height="120" class="mt-4">
-                    <v-textarea ref="textareaRef" class="text-pre-wrap text-truncate pa-2" :model-value="review.review" no-resize rounded="xl" variant="solo" flat hide-details />
+                    <p ref="reviewRef" class="text-grey-darken-2 review-text text-pre-wrap pa-2 animate animate__animated animate__slideInRight">{{ review.review }}</p>
                 </v-sheet>
             </v-card-text>
+            <!-- <v-progress-circular style="position: absolute; bottom: 8px; right: 8px;" :model-value="progress" width="1" :rotate="rotate" /> -->
         </v-card>
     </v-container>
 </template>
@@ -24,6 +25,11 @@
 .app-logo {
     position: absolute;
     right: -32px;
+}
+
+p.review-text {
+    max-height: 110px;
+    overflow: auto;
 }
 
 .rounded-circle {
@@ -36,41 +42,53 @@
     z-index: 999;
 }
 
-:deep() .v-input--density-default {
-    --v-input-padding-top: unset;
+:deep() .highlight {
+    animation: highlightWord linear forwards;
 }
 
-:deep() .v-textarea .v-field--variant-solo {
-    background-color: rgba(255, 255, 255, 0);
-}
+@keyframes highlightWord {
+    0% {
+        color: inherit;
+    }
 
-:deep() .v-textarea textarea {
-    max-height: 110px;
-    border-radius: 16px;
-    padding-bottom: 0;
-    padding-top: 0;
-    padding-left: 8px;
-    padding-right: 8px;
+    100% {
+        color: black;
+    }
 }
 </style>
 <script setup>
 import 'animate.css'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useDisplay } from 'vuetify'
 
-const textareaRef = ref()
 const { smAndDown } = useDisplay()
 const rating = ref(0)
 const props = defineProps({
     review: Object,
-    app: Object
+    app: Object,
+    progress: Number,
+    rotate: Number,
+    duration: Number,
 })
+const reviewRef = ref()
+const durationMinusAnimationTime = computed(() => props.duration - 300)
+
+function highlightWords() {
+    const reviewContainer = reviewRef.value
+    reviewContainer.innerHTML = props.review.review.match(/\b\w+\b/g).map(word => `<span>${word}</span>`).join(' ')
+
+    const words = reviewContainer.querySelectorAll('span')
+    const wordDuration = durationMinusAnimationTime.value / words.length
+
+    words.forEach((word, index) => {
+        word.style.animationDelay = `${index * wordDuration}ms`
+        word.style.animationDuration = `${wordDuration}ms`
+        word.classList.add('highlight')
+    })
+}
 onMounted(() => {
     const duration = Math.random() * (3 - 1) + 1
-    const textareaEl = textareaRef.value.$el.querySelector('textarea')
     let currentRating = 0
-
-    textareaEl.classList.add('animate', 'animate__animated', 'animate__slideInRight')
 
     // simple function to count with an easing function from currentRating to props.review.rating
     function count() {
@@ -81,5 +99,6 @@ onMounted(() => {
         }
     }
     count()
+    highlightWords()
 })
 </script>

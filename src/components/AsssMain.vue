@@ -8,8 +8,8 @@
             </v-text-field>
         </div>
         <v-window ref="windowRef" v-if="app && reviews?.length" show-arrows="hover" continuous v-model="windows" @mouseenter="hovering = true" @mouseleave="hovering = false">
-            <v-window-item v-for="(review, index) of reviews.filter(reviewFilter)" :key="index">
-                <rating-card :review="review" :app="app" />
+            <v-window-item v-for="(review, index) of reviews.filter(reviewFilter)" :key="review._id">
+                <rating-card v-if="Math.abs(windows - index) <= 2" :active="windows === index" :review="review" :app="app" :progress="reviewReadTimer" :rotate="(windows || 1) * 10" :duration="duration" />
                 <div style="position: relative; top: -64px; height: 0" class="text-caption text-center">{{ `${windows + 1} of ${app.totalReviews || reviews.length}` }}</div>
             </v-window-item>
             <!-- pausedAtLeastOnce hides the message on first load -->
@@ -56,6 +56,8 @@ const windowRef = ref()
 const props = defineProps({
     auth: Object
 })
+const progressBarTickInterval = ref()
+const reviewReadTimer = ref(0)
 const pausedAtLeastOnce = ref(false)
 const { $api } = getCurrentInstance().appContext.config.globalProperties
 const store = useAppStore()
@@ -68,10 +70,10 @@ const windows = ref()
 const playStateUpdated = ref(false)
 const hovering = ref(false)
 const animationendEventListenerAdded = ref(false)
-const unfilteredReviews = computed(() => reviews.value?.filter(reviewFilter).length || 0)
-const interval = ref()
+const filteredReviews = computed(() => reviews.value?.filter(reviewFilter))
 const limit = ref(20)
 const embed = ref(false)
+const duration = ref(0)
 async function submitHandler() {
     try {
         if (!props.auth?.token) {
@@ -123,8 +125,8 @@ const loadReviews = async (url, uuid, index = 0) => {
                     reviews.value.push(...chunk.value)
                     index += limit.value
                     await until(
-                        callback => callback(null, windows?.value && windows.value >= reviews.value.length - 10),
-                        async () => await new Promise(resolve => setTimeout(resolve))
+                        callback => callback(null, windows?.value && windows.value >= filteredReviewsLength.value - 10),
+                        async () => await new Promise(resolve => setTimeout(resolve, 1000))
                     )
                 }
             } else {
@@ -148,15 +150,29 @@ function handleKeydown(event) {
     } else if (event.key === 'ArrowLeft') {
         windows.value -= 1
     }
-    resetInterval()
+    resetTimeout()
 }
-function resetInterval() {
-    if (interval.value) clearInterval(interval.value)
-    interval.value = setInterval(() => {
+const filteredReviewsLength = computed(() => filteredReviews.value?.length || 0)
+function resetTimeout(d = 5000) {
+    const wordsInNextReview = (filteredReviews.value[(windows?.value || 0) + 1]?.review.match(/\b\w+\b/g) || [])?.length
+    const nextDuration = Math.min(Math.max(wordsInNextReview * 200, 2000) || d, 11000)
+    // console.log(`${windows?.value} ${wordsInNextReview} words, ${nextDuration/1000}s`, filteredReviews.value[(windows?.value || 0) + 1]?.review)
+
+    duration.value = d
+    const tick = d / 100
+    let ticks = 0
+    if (progressBarTickInterval.value) clearInterval(progressBarTickInterval.value)
+    progressBarTickInterval.value = setInterval(() => {
+        reviewReadTimer.value = ticks < 5 ? 0 : (1 - (d - ticks * tick) / d) * 100
+        ticks += 1
+    }, tick)
+    setTimeout(() => {
         if (play.value && !hovering.value) {
-            windows.value += windows.value === unfilteredReviews.value - 1 ? -(unfilteredReviews.value - 1) : 1
+            windows.value += windows.value === filteredReviewsLength.value - 1 ? -(filteredReviewsLength.value - 1) : 1
         }
-    }, 5000)
+        clearInterval(progressBarTickInterval.value)
+        resetTimeout(nextDuration)
+    }, d)
 }
 onMounted(() => {
     setApp()
@@ -167,7 +183,7 @@ onMounted(() => {
         store.url = decodeURIComponent(new URLSearchParams(document.location.search).get('url'))
         loadReviews(store.url, uuid.value)
     }
-    resetInterval()
+    resetTimeout()
     addMessageEventListener()
     document.ondblclick = e => {
         play.value = !play.value
@@ -189,7 +205,7 @@ onMounted(() => {
     }, 1000)
 })
 onBeforeUnmount(() => {
-    clearInterval(interval.value)
+    if (progressBarTickInterval.value) clearInterval(progressBarTickInterval.value)
     document.removeEventListener('keydown', handleKeydown)
 })
 </script>
