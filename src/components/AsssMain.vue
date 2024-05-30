@@ -8,7 +8,7 @@
             </v-text-field>
         </div>
         <div class="w-100 d-flex align-center justify-center">
-            <social-share rounded />
+            <social-share v-if="app && reviews?.length" rounded />
         </div>
         <v-window ref="windowRef" v-if="app && reviews?.length" show-arrows="hover" continuous v-model="windows" @mouseenter="hovering = true" @mouseleave="hovering = false">
             <v-window-item v-for="(review, index) of reviews.filter(reviewFilter)" :key="review._id">
