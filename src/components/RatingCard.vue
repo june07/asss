@@ -53,6 +53,7 @@ p.review-text {
 
     100% {
         color: black;
+        font-weight: bolder;
     }
 }
 </style>

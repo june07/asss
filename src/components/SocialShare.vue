@@ -12,7 +12,7 @@
                 <ShareNetwork :url="url" :network="shareType.network" :title="title" :description="description" :quote="quote" :hashtags="hashtags" :twitterUser="twitterUser" class="d-flex">
                     <v-icon class="mr-2" :color="shareType.color">
                         <v-icon v-if="shareType.icon" size="x-small" :icon="shareType.icon" />
-                        <v-img v-else src="/Npm-logo.svg" class="mr-2" height="32" width="32"></v-img>
+                        <v-img v-else src="/asss.svg" class="mr-2" height="32" width="32"></v-img>
                     </v-icon>
                     <div>{{ shareType.title }}</div>
                 </ShareNetwork>
@@ -26,7 +26,7 @@ a {
 }
 </style>
 <script setup>
-import { ref, inject, mergeProps, watch, onMounted } from 'vue'
+import { ref, mergeProps, watch, onMounted } from 'vue'
 import { ShareNetwork } from 'vue-social-sharing'
 
 const menu = ref()
