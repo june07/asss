@@ -1,6 +1,6 @@
 <template>
     <v-container fluid v-show="loaded">
-        <div v-if="loaded && !reviews?.length && !embed">
+        <div v-if="loaded && !reviews?.length">
             <v-text-field variant="outlined" v-model="store.url" hide-details="auto" persistent-hint label="Web Store Reviews URL">
                 <template v-slot:append-inner>
                     <v-btn @click="submitHandler" text="add" flat variant="tonal" :loading="loading" />
@@ -76,7 +76,6 @@ const hovering = ref(false)
 const animationendEventListenerAdded = ref(false)
 const filteredReviews = computed(() => reviews.value?.filter(reviewFilter))
 const limit = ref(20)
-const embed = ref(false)
 const duration = ref(0)
 async function submitHandler() {
     try {
@@ -180,11 +179,11 @@ function resetTimeout(d = 5000) {
 }
 onMounted(() => {
     setApp()
-    if (document.location.search.includes('embed')) {
-        embed.value = true
-    }
     if (document.location.search.includes('url')) {
         store.url = decodeURIComponent(new URLSearchParams(document.location.search).get('url'))
+        loadReviews(store.url, uuid.value)
+    } else if (document.location.pathname === '/nim') {
+        store.url = 'https://chromewebstore.google.com/detail/nodejs-v8-inspector-manag/gnhhdgbaldcilmgcpfddgdbkhjohddkj/reviews'
         loadReviews(store.url, uuid.value)
     }
     resetTimeout()
