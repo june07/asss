@@ -62,13 +62,13 @@ const apiService = () => {
         }
     }
     const cacheless = {
-        ncPostApp: async ({ auth, url }) => await request({ auth, method: 'POST', url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}` }),
-        ncGetStatus: async ({ uuid }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss/status/${uuid}` }),
-        ncGetReviews: async ({ url, limit, offset = 0 }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}&limit=${limit || 10}&offset=${offset}` }),
+        postApp: async ({ auth, url }) => await request({ auth, method: 'POST', url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}` }),
+        getStatus: async ({ uuid }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss/status/${uuid}` }),
+        getReviews: async ({ url, limit, offset = 0 }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}&limit=${limit || 10}&offset=${offset}` }),
     }
     const getReviewsCount = async ({ url }) => await request({ returnResponse: true, url: `${VITE_APP_API_SERVER}/v1/asss/count?url=${url}`, cache: true })
     async function reFetchAllFromMongo(url, uuid, offset, limit, store) {
-        const data = await cacheless.ncGetReviews({ url, limit, offset })
+        const data = await cacheless.getReviews({ url, limit, offset })
         if (data.reviews && data.reviews.length > 0) {
             const count = await addReviewsToDB(data.appData._id, uuid, data)
 
