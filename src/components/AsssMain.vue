@@ -7,8 +7,8 @@
                 </template>
             </v-text-field>
         </div>
-        <div class="w-100 d-flex align-center justify-center">
-            <social-share v-if="app && reviews?.length" rounded />
+        <div class="w-100 d-flex align-center justify-center" v-if="app && reviews?.length && !hideShare">
+            <social-share rounded />
         </div>
         <v-window ref="windowRef" v-if="app && reviews?.length" show-arrows="hover" continuous v-model="windows" @mouseenter="hovering = true" @mouseleave="hovering = false">
             <v-window-item v-for="(review, index) of reviews.filter(reviewFilter)" :key="review._id">
@@ -20,7 +20,7 @@
                 <v-sheet rounded="xl" class="message text-h4 animate animate__animated pa-4" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)" :class="playStateUpdated || (hovering && !play) ? 'animate__fadeIn' : 'animate__fadeOut'">{{ play ? 'playing' : 'paused' }}</v-sheet>
             </div>
         </v-window>
-        <v-container v-if="app && reviews?.length" class="d-flex flex-column align-center justify-center mt-n16 animate__animated animate__bounceInDown">
+        <v-container v-if="app && reviews?.length && !hideFooter" class="d-flex flex-column align-center justify-center mt-n16 animate__animated animate__bounceInDown">
             <div class="title d-flex align-center" @click="openAppStore" style="cursor: pointer">
                 <v-avatar size="64" class="app-logo">
                     <v-img :src="app.logo?.replace('s60', 's128')" alt="app icon" />
@@ -59,7 +59,10 @@ const emit = defineEmits(['message'])
 const play = ref(true)
 const windowRef = ref()
 const props = defineProps({
-    auth: Object
+    auth: Object,
+    hideCounter: Boolean,
+    hideShare: Boolean,
+    hideFooter: Boolean
 })
 const progressBarTickInterval = ref()
 const reviewReadTimer = ref(0)

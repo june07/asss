@@ -2,7 +2,7 @@
     <v-app>
         <v-main>
             <v-container class="d-flex justify-center">
-                <asss-main v-if="authLoaded" :auth="auth" @message="messageHandler" />
+                <asss-main v-if="authLoaded" :auth="auth" :hideFooter="hideFooter" :hideShare="hideShare" :hideCounter="hideCounter" @message="messageHandler" />
             </v-container>
         </v-main>
         <v-snackbar text :timeout="-1" v-model="snackbar.active" style="opacity: 0.9" @click="snackbarCloseHandler">
@@ -24,7 +24,7 @@
 <style scoped>
 </style>
 <script setup>
-import { ref, getCurrentInstance, onMounted } from "vue"
+import { ref, getCurrentInstance, onMounted, computed } from "vue"
 
 import AsssMain from "./src/components/AsssMain.vue"
 
@@ -44,6 +44,9 @@ const lastBuild = ref()
 const versionCheckIntervalId = ref()
 const buildInfo = ref()
 const authLoaded = ref(false)
+const hideFooter = computed(() => route.value.params?.get('hideFooter') ? true : false)
+const hideCounter = computed(() => route.value.params?.get('hideCounter') ? true : false)
+const hideShare = computed(() => route.value.params?.get('hideShare') ? true : false)
 
 const checkVersion = async () => {
     buildInfo.value = await $api.buildInfo()
