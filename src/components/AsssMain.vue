@@ -13,7 +13,7 @@
         <v-window ref="windowRef" v-if="app && reviews?.length" show-arrows="hover" continuous v-model="windows" @mouseenter="hovering = true" @mouseleave="hovering = false">
             <v-window-item v-for="(review, index) of reviews.filter(reviewFilter)" :key="review._id">
                 <rating-card v-if="Math.abs(windows - index) <= 2" :active="windows === index" :review="review" :app="app" :progress="reviewReadTimer" :rotate="(windows || 1) * 10" :duration="duration" />
-                <div style="position: relative; top: -64px; height: 0" class="text-caption text-center">{{ `${windows + 1} of ${app.totalReviews || reviews.length}` }}</div>
+                <div v-if="!hideCounter" style="position: relative; top: -64px; height: 0" class="text-caption text-center">{{ `${windows + 1} of ${app.totalReviews || reviews.length}` }}</div>
             </v-window-item>
             <!-- pausedAtLeastOnce hides the message on first load -->
             <div v-show="pausedAtLeastOnce">

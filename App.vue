@@ -44,9 +44,9 @@ const lastBuild = ref()
 const versionCheckIntervalId = ref()
 const buildInfo = ref()
 const authLoaded = ref(false)
-const hideFooter = computed(() => route.value.params?.get('hideFooter') ? true : false)
-const hideCounter = computed(() => route.value.params?.get('hideCounter') ? true : false)
-const hideShare = computed(() => route.value.params?.get('hideShare') ? true : false)
+const hideFooter = computed(() => !['0', 0, 'false', false].includes(route.value.params?.get('hideFooter')))
+const hideCounter = computed(() => !['0', 0, 'false', false].includes(route.value.params?.get('hideCounter')))
+const hideShare = computed(() => !['0', 0, 'false', false].includes(route.value.params?.get('hideShare')))
 
 const checkVersion = async () => {
     buildInfo.value = await $api.buildInfo()
