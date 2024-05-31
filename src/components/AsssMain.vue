@@ -49,6 +49,7 @@ import { useAppStore } from '../store/app'
 import { v5 as uuidv5 } from 'uuid'
 import NumberAnimation from "vue-number-animation"
 import { until } from 'async'
+import Swal from 'sweetalert2'
 
 import { getAppFromDB } from '../plugins/indexedDb.plugin'
 import RatingCard from './RatingCard.vue'
@@ -87,14 +88,58 @@ async function submitHandler() {
 
         const job = await $api.postApp({ auth: props.auth, url: encodeURIComponent(store.url) })
         store.jobs[job.uuid] = job
+
+        showSwal()
     } catch (error) {
         console.error(error)
-        if (/429/.test(error.response.status)) {
+        if (/429/.test(error.response?.status)) {
             console.log('Too many requests. Please try again later.')
         }
     } finally {
         loading.value = false
     }
+}
+showSwal({ t: 30000 })
+function showSwal({ t = 2000 } = {}) {
+    let timerInterval
+
+
+    Swal.fire({
+        title: `Your app has been added!`,
+        html: `<p class="mb-4">The ass 🕳️<span class="ml-n5">🕳️</span> are being wiped from ${app.value?.name || 'your'} reviews.</p>
+        <p style="display: none">I will close in <b></b> seconds.</p>`,
+        icon: 'success',
+        // footer: `<div id="swal-footer"></div>`,
+        timer: t,
+        didOpen: async () => {
+            await until(
+                async () => {
+                    try {
+                        const status = await $api.getStatus({ uuid: uuid.value })
+                        return status?.reviews
+                    } catch (error) {
+                        console.log(error)
+                    }
+                },
+                async () => await new Promise(resolve => setTimeout(resolve, 1000))
+            )
+
+            Swal.showLoading()
+            let timer = Swal.getPopup().querySelector("b")
+            timerInterval = setInterval(() => {
+                timer.textContent = `${(Swal.getTimerLeft() / 1000).toFixed(2)}`
+                timer.style.display = 'inline-block'
+            }, 100)
+        },
+        willClose: () => {
+            clearInterval(timerInterval)
+        }
+    }).then(async (result) => {
+        if (result.dismiss === Swal.DismissReason.timer) {
+            console.log("I was closed by the timer")
+            loadReviews(store.url, uuid.value)
+        }
+    })
 }
 function reviewFilter(review) {
     return review.rating >= 4

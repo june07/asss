@@ -15,6 +15,7 @@
     "keycloak-js": "^24.0.4",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
+    "sweetalert2": "^11.11.0",
     "uuid": "^9.0.1",
     "vite": "^5.2.8",
     "vite-plugin-vuetify": "^2.0.3",
