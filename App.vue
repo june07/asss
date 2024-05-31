@@ -1,7 +1,7 @@
 <template>
     <v-app>
         <v-main>
-            <v-container class="d-flex justify-center">
+            <v-container class="d-flex justify-center pa-0">
                 <asss-main v-if="authLoaded" :auth="auth" :hideFooter="hideFooter" :hideShare="hideShare" :hideCounter="hideCounter" @message="messageHandler" />
             </v-container>
         </v-main>

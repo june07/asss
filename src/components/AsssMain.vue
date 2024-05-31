@@ -1,5 +1,5 @@
 <template>
-    <v-container fluid v-show="loaded">
+    <v-container fluid v-show="loaded" class="pa-0">
         <div v-if="loaded && !reviews?.length">
             <v-text-field variant="outlined" v-model="store.url" hide-details="auto" persistent-hint label="Web Store Reviews URL">
                 <template v-slot:append-inner>
