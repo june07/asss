@@ -13,8 +13,16 @@
         <v-window ref="windowRef" v-if="app && reviews?.length" show-arrows="hover" continuous v-model="windows" @mouseenter="hovering = true" @mouseleave="hovering = false">
             <v-window-item v-for="(review, index) of reviews.filter(reviewFilter)" :key="review._id">
                 <rating-card v-if="Math.abs(windows - index) <= 2" :active="windows === index" :review="review" :app="app" :progress="reviewReadTimer" :rotate="(windows || 1) * 10" :duration="duration" />
-                <div v-if="!hideCounter" style="position: relative; top: -64px; height: 0" class="text-caption text-center">{{ `${windows + 1} of ${app.totalReviews || reviews.length}` }}</div>
             </v-window-item>
+            <div style="position: relative; top: -100px; height: 0" class="text-caption text-center">
+                <span style="font-size: smaller">Powered by</span>
+                <v-btn href="https://github.com/june07/asss" target="_blank" class="text-decoration-none" variant="plain" size="x-small" text="AssS">
+                    <template v-slot:prepend>
+                        <v-img src="/asss.svg" height="16" width="16" />
+                    </template>
+                </v-btn>
+            </div>
+            <div v-if="!hideCounter" style="position: relative; top: -64px; height: 0" class="text-caption text-center">{{ `${windows + 1} of ${app.totalReviews || reviews.length}` }}</div>
             <!-- pausedAtLeastOnce hides the message on first load -->
             <div v-show="pausedAtLeastOnce">
                 <v-sheet rounded="xl" class="message text-h4 animate animate__animated pa-4" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)" :class="(hovering && !play) ? 'animate__fadeIn' : 'animate__fadeOut'">{{ play ? 'playing' : 'paused' }}</v-sheet>
