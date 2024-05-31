@@ -17,7 +17,7 @@
             </v-window-item>
             <!-- pausedAtLeastOnce hides the message on first load -->
             <div v-show="pausedAtLeastOnce">
-                <v-sheet rounded="xl" class="message text-h4 animate animate__animated pa-4" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)" :class="playStateUpdated || (hovering && !play) ? 'animate__fadeIn' : 'animate__fadeOut'">{{ play ? 'playing' : 'paused' }}</v-sheet>
+                <v-sheet rounded="xl" class="message text-h4 animate animate__animated pa-4" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)" :class="(hovering && !play) ? 'animate__fadeIn' : 'animate__fadeOut'">{{ play ? 'playing' : 'paused' }}</v-sheet>
             </div>
         </v-window>
         <v-container v-if="app && reviews?.length && !hideFooter" class="d-flex flex-column align-center justify-center mt-n16 animate__animated animate__bounceInDown">
@@ -75,7 +75,6 @@ const loading = ref(false)
 const loaded = ref(false)
 const reviews = ref([])
 const windows = ref()
-const playStateUpdated = ref(false)
 const hovering = ref(false)
 const animationendEventListenerAdded = ref(false)
 const filteredReviews = computed(() => reviews.value?.filter(reviewFilter))
@@ -152,15 +151,6 @@ function showSwal({ t = 2000 } = {}) {
 }
 function reviewFilter(review) {
     return review.rating >= 4
-}
-function addMessageEventListener() {
-    if (animationendEventListenerAdded.value) return
-    const el = document.querySelector('.message')
-    if (!el) return
-    el.addEventListener('animationend', () => {
-        playStateUpdated.value = false
-    })
-    animationendEventListenerAdded.value = true
 }
 function openAppStore() {
     console.log(app.value)
@@ -242,16 +232,13 @@ onMounted(() => {
         loadReviews(store.url, uuid.value)
     }
     resetTimeout()
-    addMessageEventListener()
     document.ondblclick = e => {
         play.value = !play.value
-        playStateUpdated.value = true
         if (!pausedAtLeastOnce.value && !play.value) {
             pausedAtLeastOnce.value = true
         }
     }
     document.addEventListener('keydown', handleKeydown)
-    watch(() => store.appIdsToUUIDs, addMessageEventListener)
     watch(() => uuid.value, setApp)
     watch(reviews.value, reviews => {
         if (reviews?.length && !app.value) {
