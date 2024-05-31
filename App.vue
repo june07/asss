@@ -44,9 +44,9 @@ const lastBuild = ref()
 const versionCheckIntervalId = ref()
 const buildInfo = ref()
 const authLoaded = ref(false)
-const hideFooter = computed(() => !['0', 0, 'false', false].includes(route.value.params?.get('hideFooter')))
-const hideCounter = computed(() => !['0', 0, 'false', false].includes(route.value.params?.get('hideCounter')))
-const hideShare = computed(() => !['0', 0, 'false', false].includes(route.value.params?.get('hideShare')))
+const hideFooter = computed(() => !(!route.value.params?.get('hideFooter') || ['0', 0, 'false', false].includes(route.value.params?.get('hideFooter'))))
+const hideCounter = computed(() => !(!route.value.params?.get('hideCounter') || !['0', 0, 'false', false].includes(route.value.params?.get('hideCounter'))))
+const hideShare = computed(() => !(!route.value.params?.get('hideShare') || !['0', 0, 'false', false].includes(route.value.params?.get('hideShare'))))
 
 const checkVersion = async () => {
     buildInfo.value = await $api.buildInfo()
@@ -105,6 +105,7 @@ onMounted(() => {
     route.value.path = window.location.pathname
     route.value.params = new URLSearchParams(window.location.search)
 
+    console.log(!(!route.value.params?.get('hideFooter') || ['0', 0, 'false', false].includes(route.value.params?.get('hideFooter'))))
     if (/\/install/.test(route.value.path)) {
         doAuth()
     } else if (/\/signup/.test(route.value.path)) {
