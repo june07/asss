@@ -99,7 +99,13 @@ async function submitHandler() {
         loading.value = false
     }
 }
-showSwal({ t: 30000 })
+/**
+const test = async function() {
+    store.url = `https://chromewebstore.google.com/detail/nodejs-v8-inspector-manag/gnhhdgbaldcilmgcpfddgdbkhjohddkj/reviews`
+    showSwal({ t: 1000 })
+}
+test()
+*/
 function showSwal({ t = 2000 } = {}) {
     let timerInterval
 
@@ -154,6 +160,7 @@ function addMessageEventListener() {
     animationendEventListenerAdded.value = true
 }
 function openAppStore() {
+    console.log(app.value)
     window.open(app.value.url, '_blank', 'noopener', 'noreferrer')
 }
 const loadReviews = async (url, uuid, index = 0) => {

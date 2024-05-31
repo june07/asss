@@ -70,7 +70,7 @@ const apiService = () => {
     async function reFetchAllFromMongo(url, uuid, offset, limit, store) {
         const data = await cacheless.getReviews({ url, limit, offset })
         if (data.reviews && data.reviews.length > 0) {
-            const count = await addReviewsToDB(data.appData._id, uuid, data)
+            const count = await addReviewsToDB(data.appData._id, url, uuid, data)
 
             if (reviewsCount === count) {
                 store.appIdsToUUIDs[data.appData._id] = uuid

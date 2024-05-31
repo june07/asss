@@ -62,7 +62,7 @@ export async function getAppFromDB(uuid) {
     return app
 }
 
-export async function addReviewsToDB(_id, uuid, data) {
+export async function addReviewsToDB(_id, url, uuid, data) {
     const { appData: app, reviews } = data
     const db = await initDB()
     const tx = db.transaction([appsStoreName, reviewsStoreName], 'readwrite')
@@ -73,7 +73,8 @@ export async function addReviewsToDB(_id, uuid, data) {
     const existingApp = await storeApp.get(_id) || {}
     const updatedApp = {
         ...existingApp,
-        ...app
+        ...app,
+        url
     }
 
     await storeApp.put({ ...updatedApp, uuid })
