@@ -50,7 +50,7 @@
             <v-btn v-for="(app, index) of apps" :key="app.id" @click="openAppStore(app.reviewsURL)" class="text-decoration-none" variant="plain" rounded="xl" stacked flat :ripple="false" @mouseenter="hovering[app._id] = true" @mouseleave="hovering[app._id] = false">
                 <div class="d-flex flex-column align-center justify-center">
                     <div v-if="index % 2 === 0" class="text-caption mb-16" :class="hovering[app._id] ? 'text-primary font-weight-bold pb-10' : ''" style="transition: all 0.5s ease-in-out">{{ app.name }}</div>
-                    <img @click.stop="loadReviews(app.reviewsURL)" style="position: absolute" class="logo" :class="!hovering[app._id] ? 'hovering-logo' : ''" :src="app.logo.replace('s60', 's128')" :width="hovering[app._id] ? 96 : 48" alt="app icon" />
+                    <img @click.stop="store.url = app.reviewsURL" style="position: absolute" class="logo" :class="!hovering[app._id] ? 'hovering-logo' : ''" :src="app.logo.replace('s60', 's128')" :width="hovering[app._id] ? 96 : 48" alt="app icon" />
                     <div v-if="index % 2 === 1" class="text-caption mt-16" :class="hovering[app._id] ? 'text-primary font-weight-bold pt-10' : ''" style="transition: all 0.5s ease-in-out">{{ app.name }}</div>
                 </div>
             </v-btn>
@@ -224,7 +224,7 @@ const loadApps = async (index = 0) => {
     }
 }
 const loadReviews = async (url, index = 0) => {
-    console.log('loadReviews', url)
+    reviews.value = []
     loading.value = true
 
     try {
@@ -314,11 +314,13 @@ onMounted(() => {
             setApp()
         }
     })
+    watch(() => store.url, url => {
+        loadReviews(url)
+    })
     setTimeout(() => {
         loaded.value = true
     }, 1000)
     isIframed.value = window !== window.top
-    console.log('isIframed', isIframed.value)
 })
 onBeforeUnmount(() => {
     if (progressBarTickInterval.value) clearInterval(progressBarTickInterval.value)
