@@ -21,6 +21,9 @@ I'll stop there and leave the 2 star folks alone... although they deserve to be 
 ![image](https://github.com/june07/asss/assets/11353590/ffdd9fb0-c20c-4976-9344-062cb5b3d831)
 
 ## Here it is in action:
+A gif and video are shown below, [visit the site](https://asss.june07.com) to see the live version (github pages embedding not possible)
+https://asss.june07.com
+
 Vue DevTools Extension:
 ![asss-vue](https://github.com/june07/asss/assets/11353590/9641ca09-754f-4a03-b5cb-f2ef15a87b70)
 
