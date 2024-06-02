@@ -1,6 +1,6 @@
 <template>
     <v-container style="height: 100vh" fluid v-show="loaded" class="d-flex align-center justify-center flex-column pa-0">
-        <v-spacer />
+        <v-spacer v-if="isIframed" />
         <div class="w-100 d-flex align-center justify-center" v-if="loaded && !reviews?.length">
             <v-text-field variant="outlined" v-model="store.url" hide-details="auto" persistent-hint label="Web Store Reviews URL">
                 <template v-slot:append-inner>
@@ -44,8 +44,8 @@
                 </div>
             </div>
         </v-container>
-        <v-spacer />
-        <v-container v-if="window.self === window.top" class="d-flex align-end justify-space-around mb-16">
+        <v-spacer v-if="isIframed" />
+        <v-container v-if="isIframed" class="d-flex align-end justify-space-around mb-16">
             <div class="used-by-label text-body-1">Used by:</div>
             <v-btn v-for="(app, index) of apps" :key="app.id" @click="openAppStore(app.reviewsURL)" class="text-decoration-none" variant="plain" rounded="xl" stacked flat :ripple="false" @mouseenter="hovering[app._id] = true" @mouseleave="hovering[app._id] = false">
                 <div class="d-flex flex-column align-center justify-center">
@@ -61,12 +61,15 @@
 .v-sheet {
     background-color: rgba(255, 255, 255, 0.8);
 }
+
 .logo {
     transition: all 0.5s ease-in-out;
 }
+
 .hovering-logo {
     filter: grayscale(1);
 }
+
 .used-by-label {
     position: fixed;
     margin-bottom: 100px;
@@ -95,6 +98,7 @@ const props = defineProps({
     hideShare: Boolean,
     hideFooter: Boolean
 })
+const isIframed = ref(false)
 const progressBarTickInterval = ref()
 const reviewReadTimer = ref(0)
 const pausedAtLeastOnce = ref(false)
@@ -171,7 +175,7 @@ function showSwal({ t = 2000 } = {}) {
 
             Swal.resumeTimer()
             Swal.getPopup().querySelector(".timer-message").style.display = 'inline-block'
-            
+
             let timer = Swal.getPopup().querySelector("b")
             timerInterval = setInterval(() => {
                 timer.textContent = `${(Swal.getTimerLeft() / 1000).toFixed(2)}`
@@ -313,6 +317,7 @@ onMounted(() => {
     setTimeout(() => {
         loaded.value = true
     }, 1000)
+    isIframed.value = window !== window.top
 })
 onBeforeUnmount(() => {
     if (progressBarTickInterval.value) clearInterval(progressBarTickInterval.value)
