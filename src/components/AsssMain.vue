@@ -1,10 +1,16 @@
 <template>
     <v-container style="height: 100vh" fluid v-show="loaded" class="d-flex align-center justify-center flex-column pa-0">
         <v-spacer v-if="!isIframed" />
+        <div class="w-100 d-flex flex-column align-center justify-center" v-if="!isIframed && /\/$/.test(route.path)">
+            Add this widget to your own site:
+            <highlightjs style="max-width: 100%; text-wrap: pretty" language="html" :code="code" />
+            <v-progress-circular style="position: absolute" v-show="loading.iframe" indeterminate color="primary" size="64" width="2">loading</v-progress-circular>
+            <iframe @load="loading.iframe = false" ref="iframeRef" :key="highlightedApp?.appId || 'nim'" v-if="!loading.reviews" :src="iframeSrc" frameborder="0" width="100%" height="450"></iframe>
+        </div>
         <div class="w-100 d-flex align-center justify-center" v-if="loaded && !reviews?.length">
             <v-text-field variant="outlined" v-model="store.url" hide-details="auto" persistent-hint label="Web Store Reviews URL">
                 <template v-slot:append-inner>
-                    <v-btn @click="submitHandler" text="add" flat variant="tonal" :loading="loading" />
+                    <v-btn @click="submitHandler" text="add" flat variant="tonal" :loading="loading.submit" />
                 </template>
             </v-text-field>
         </div>
@@ -46,8 +52,8 @@
         </v-container>
         <v-spacer v-if="!isIframed" />
         <v-container v-if="!isIframed" class="d-flex align-end justify-space-around mb-16">
-            <div class="used-by-label text-body-1">Used by:</div>
-            <v-btn v-for="(app, index) of apps" :key="app.id" @click="openAppStore(app.reviewsURL)" class="text-decoration-none" variant="plain" rounded="xl" stacked flat :ripple="false" @mouseenter="hovering[app._id] = true" @mouseleave="hovering[app._id] = false">
+            <div class="used-by-label text-overline">As used on</div>
+            <v-btn v-for="(app, index) of apps" :key="app.id" @click="openAppStore(app.reviewsURL)" class="text-decoration-none" variant="plain" rounded="xl" stacked flat :ripple="false" @mouseenter="highlightedApp = app; hovering[app._id] = true" @mouseleave="hovering[app._id] = false">
                 <div class="d-flex flex-column align-center justify-center">
                     <div v-if="index % 2 === 0" class="text-caption mb-16" :class="hovering[app._id] ? 'text-primary font-weight-bold pb-10' : ''" style="transition: all 0.5s ease-in-out">{{ app.name }}</div>
                     <img @click.stop="store.url = app.reviewsURL" style="position: absolute" class="logo" :class="!hovering[app._id] ? 'hovering-logo' : ''" :src="app.logo.replace('s60', 's128')" :width="hovering[app._id] ? 96 : 48" alt="app icon" />
@@ -74,6 +80,11 @@
     position: fixed;
     margin-bottom: 100px;
     transform: rotate(-2deg);
+    font-weight: bold;
+}
+
+.iframe-placeholder {
+    background: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 100% 100%"><text fill="%23FF0000" x="50%" y="50%" font-family="\'Lucida Grande\', sans-serif" font-size="24" text-anchor="middle">PLACEHOLDER</text></svg>') 0px 0px no-repeat;
 }
 </style>
 <script setup>
@@ -84,12 +95,17 @@ import { v5 as uuidv5 } from 'uuid'
 import NumberAnimation from "vue-number-animation"
 import { until } from 'async'
 import Swal from 'sweetalert2'
+import 'highlight.js/lib/common'
+import hljsVuePlugin from "@highlightjs/vue-plugin"
+import 'highlight.js/styles/github.min.css'
 
 import { getAppFromDB } from '../plugins/indexedDb.plugin'
 import RatingCard from './RatingCard.vue'
 import SocialShare from './SocialShare.vue'
 
+const highlightjs = hljsVuePlugin.component
 const emit = defineEmits(['message'])
+const route = ref({})
 const play = ref(true)
 const windowRef = ref()
 const props = defineProps({
@@ -98,6 +114,11 @@ const props = defineProps({
     hideShare: Boolean,
     hideFooter: Boolean
 })
+const aliases = {
+    nim: 'gnhhdgbaldcilmgcpfddgdbkhjohddkj'
+}
+const iframeRef = ref()
+const highlightedApp = ref()
 const isIframed = ref(false)
 const progressBarTickInterval = ref()
 const reviewReadTimer = ref(0)
@@ -107,7 +128,12 @@ const store = useAppStore()
 const uuid = computed(() => store.url && uuidv5(store.url, uuidv5.URL))
 const app = ref()
 const apps = ref([])
-const loading = ref(false)
+const loading = ref({
+    submit: false,
+    reviews: false,
+    apps: false,
+    iframe: true,
+})
 const loaded = ref(false)
 const reviews = ref([])
 const windows = ref()
@@ -118,13 +144,18 @@ const hovering = ref({
 const filteredReviews = computed(() => reviews.value?.filter(reviewFilter))
 const limit = ref(20)
 const duration = ref(0)
+const iframeSrc = computed(() => {
+    const src = `${document.location.origin}/app/${highlightedApp.value?.appId || 'nim'}?hideShare=1`
+    return src
+})
+const code = computed(() => `<iframe :src="${iframeSrc.value.split('?')[0]}"></iframe>`)
 async function submitHandler() {
     try {
         if (!props.auth?.token) {
             emit('message', 'Please login to add reviews.')
             return
         }
-        loading.value = true
+        loading.value.submit = true
 
         const job = await $api.postApp({ auth: props.auth, url: encodeURIComponent(store.url) })
         store.jobs[job.uuid] = job
@@ -136,7 +167,7 @@ async function submitHandler() {
             console.log('Too many requests. Please try again later.')
         }
     } finally {
-        loading.value = false
+        loading.value.submit = false
     }
 }
 
@@ -197,9 +228,8 @@ function reviewFilter(review) {
 function openAppStore(url) {
     window.open(typeof url === 'string' ? url : app.value.url, '_blank', 'noopener', 'noreferrer')
 }
-const loadApps = async (index = 0) => {
-    console.log('loading apps', index)
-    loading.value = true
+const loadApps = async (index = 0) => new Promise(async (resolve) => {
+    loading.value.apps = true
 
     try {
         let done = false
@@ -217,15 +247,17 @@ const loadApps = async (index = 0) => {
             }
         }
 
-        loading.value = false
+        loading.value.apps = false
     } catch (err) {
         console.error(err)
-        loading.value = false
+        loading.value.apps = false
+    } finally {
+        resolve()
     }
-}
+})
 const loadReviews = async (url, index = 0) => {
     reviews.value = []
-    loading.value = true
+    loading.value.reviews = true
 
     try {
         let done = false
@@ -250,10 +282,10 @@ const loadReviews = async (url, index = 0) => {
             }
         }
 
-        loading.value = false
+        loading.value.reviews = false
     } catch (err) {
         console.error(err)
-        loading.value = false
+        loading.value.reviews = false
     }
 }
 async function setApp() {
@@ -290,15 +322,25 @@ function resetTimeout(d = 5000) {
         resetTimeout(nextDuration)
     }, d)
 }
+async function loadAppWidget(loadingApps) {
+    await loadingApps
+    const appIdOrAlias = document.location.pathname.match(/\/app\/(\w+)$/)?.[1]
+    const appId = appIdOrAlias && aliases[appIdOrAlias] || appIdOrAlias
+    const reviewsURL = appId && apps.value.find(app => app.appId === appId)?.reviewsURL
+
+    if (!reviewsURL) return
+    store.url = reviewsURL
+    loadReviews(store.url)
+}
 onMounted(() => {
     setApp()
-    loadApps()
+    const loadingApps = loadApps()
+    route.value.path = document.location.pathname
     if (document.location.search.includes('url')) {
         store.url = decodeURIComponent(new URLSearchParams(document.location.search).get('url'))
         loadReviews(store.url)
-    } else if (document.location.pathname === '/nim') {
-        store.url = 'https://chromewebstore.google.com/detail/nodejs-v8-inspector-manag/gnhhdgbaldcilmgcpfddgdbkhjohddkj/reviews'
-        loadReviews(store.url)
+    } else if (/\/app\/\w+$/.test(document.location.pathname)) {
+        loadAppWidget(loadingApps)
     }
     resetTimeout()
     document.ondblclick = e => {
@@ -321,6 +363,14 @@ onMounted(() => {
         loaded.value = true
     }, 1000)
     isIframed.value = window !== window.top
+    if (iframeRef.value) {
+        loading.value.iframe = true
+    }
+    watch(() => iframeRef.value, iframe => {
+        if (iframe) {
+            loading.value.iframe = true
+        }
+    })
 })
 onBeforeUnmount(() => {
     if (progressBarTickInterval.value) clearInterval(progressBarTickInterval.value)

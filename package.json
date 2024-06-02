@@ -7,10 +7,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@highlightjs/vue-plugin": "^2.1.0",
     "animate.css": "^4.1.1",
     "async": "^3.2.5",
     "axios": "^1.6.8",
     "axios-cache-interceptor": "^1.5.3",
+    "highlight.js": "^11.9.0",
     "idb": "^8.0.0",
     "keycloak-js": "^24.0.4",
     "pinia": "^2.1.7",
