@@ -195,7 +195,7 @@ function reviewFilter(review) {
     return review.rating >= 4
 }
 function openAppStore(url) {
-    window.open(url || app.value.url, '_blank', 'noopener', 'noreferrer')
+    window.open(typeof url === 'string' ? url : app.value.url, '_blank', 'noopener', 'noreferrer')
 }
 const loadApps = async (index = 0) => {
     console.log('loading apps', index)
