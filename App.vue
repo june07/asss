@@ -105,7 +105,6 @@ onMounted(() => {
     route.value.path = window.location.pathname
     route.value.params = new URLSearchParams(window.location.search)
 
-    console.log(!(!route.value.params?.get('hideFooter') || ['0', 0, 'false', false].includes(route.value.params?.get('hideFooter'))))
     if (/\/install/.test(route.value.path)) {
         doAuth()
     } else if (/\/signup/.test(route.value.path)) {

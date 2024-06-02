@@ -1,5 +1,5 @@
 import axios from "axios"
-import { getReviewsFromDB, addReviewsToDB } from './indexedDb.plugin'
+import { getReviewsFromDB, addReviewsToDB, addAppsToDB } from './indexedDb.plugin'
 import { setupCache, buildWebStorage } from 'axios-cache-interceptor'
 
 const {
@@ -20,7 +20,7 @@ setupCache(axiosInstance, {
 
 const apiService = () => {
     const request = async (passedOptions) => {
-        const { auth, data, method, url, responseType, cache = false } = passedOptions
+        const { auth, data, method, url, responseType, cache = MODE === 'development' } = passedOptions
         const defaultOptions = {
             url,
             method: method || 'GET',
@@ -62,8 +62,9 @@ const apiService = () => {
         }
     }
     const cacheless = {
+        getApps: async ({ limit, offset = 0, cache }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss/apps?limit=${limit || 10}&offset=${offset}`, cache }),
         postApp: async ({ auth, url }) => await request({ auth, method: 'POST', url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}` }),
-        getStatus: async ({ uuid }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss/status/${uuid}` }),
+        getStatus: async ({ uuid, cache }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss/status/${uuid}`, cache }),
         getReviews: async ({ url, limit, offset = 0 }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}&limit=${limit || 10}&offset=${offset}` }),
     }
     const getReviewsCount = async ({ url }) => await request({ returnResponse: true, url: `${VITE_APP_API_SERVER}/v1/asss/count?url=${url}`, cache: true })
@@ -137,7 +138,18 @@ const apiService = () => {
                     return
                 }
             }
-        }
+        },
+        chunkedAppsIterator: async function* (offset = 0, limit = 10) {
+            const apps = await cacheless.getApps({ limit, offset, cache: false })
+
+            if (!apps.length) {
+                return
+            }
+
+            await addAppsToDB(apps)
+
+            yield apps
+        },
     }
 }
 

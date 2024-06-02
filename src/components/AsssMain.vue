@@ -1,6 +1,7 @@
 <template>
-    <v-container fluid v-show="loaded" class="pa-0">
-        <div v-if="loaded && !reviews?.length">
+    <v-container style="height: 100vh" fluid v-show="loaded" class="d-flex align-center justify-center flex-column pa-0">
+        <v-spacer />
+        <div class="w-100 d-flex align-center justify-center" v-if="loaded && !reviews?.length">
             <v-text-field variant="outlined" v-model="store.url" hide-details="auto" persistent-hint label="Web Store Reviews URL">
                 <template v-slot:append-inner>
                     <v-btn @click="submitHandler" text="add" flat variant="tonal" :loading="loading" />
@@ -10,7 +11,7 @@
         <div class="w-100 d-flex align-center justify-center" v-if="app && reviews?.length && !hideShare">
             <social-share rounded />
         </div>
-        <v-window ref="windowRef" v-if="app && reviews?.length" show-arrows="hover" continuous v-model="windows" @mouseenter="hovering = true" @mouseleave="hovering = false">
+        <v-window class="w-100" ref="windowRef" v-if="app && reviews?.length" show-arrows="hover" continuous v-model="windows" @mouseenter="hovering.window = true" @mouseleave="hovering.window = false">
             <v-window-item v-for="(review, index) of reviews.filter(reviewFilter)" :key="review._id">
                 <rating-card v-if="Math.abs(windows - index) <= 2" :active="windows === index" :review="review" :app="app" :progress="reviewReadTimer" :rotate="(windows || 1) * 10" :duration="duration" />
             </v-window-item>
@@ -25,7 +26,7 @@
             <div v-if="!hideCounter" style="position: relative; top: -64px; height: 0" class="text-caption text-center">{{ `${windows + 1} of ${app.totalReviews || reviews.length}` }}</div>
             <!-- pausedAtLeastOnce hides the message on first load -->
             <div v-show="pausedAtLeastOnce">
-                <v-sheet rounded="xl" class="message text-h4 animate animate__animated pa-4" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)" :class="(hovering && !play) ? 'animate__fadeIn' : 'animate__fadeOut'">{{ play ? 'playing' : 'paused' }}</v-sheet>
+                <v-sheet rounded="xl" class="message text-h4 animate animate__animated pa-4" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)" :class="(hovering.window && !play) ? 'animate__fadeIn' : 'animate__fadeOut'">{{ play ? 'playing' : 'paused' }}</v-sheet>
             </div>
         </v-window>
         <v-container v-if="app && reviews?.length && !hideFooter" class="d-flex flex-column align-center justify-center mt-n16 animate__animated animate__bounceInDown">
@@ -43,11 +44,33 @@
                 </div>
             </div>
         </v-container>
+        <v-spacer />
+        <v-container class="d-flex align-end justify-space-around mb-16">
+            <div class="used-by-label text-body-1">Used by:</div>
+            <v-btn v-for="(app, index) of apps" :key="app.id" @click="openAppStore(app.reviewsURL)" class="text-decoration-none" variant="plain" rounded="xl" stacked flat :ripple="false" @mouseenter="hovering[app._id] = true" @mouseleave="hovering[app._id] = false">
+                <div class="d-flex flex-column align-center justify-center">
+                    <div v-if="index % 2 === 0" class="text-caption mb-16" :class="hovering[app._id] ? 'text-primary font-weight-bold pb-10' : ''" style="transition: all 0.5s ease-in-out">{{ app.name }}</div>
+                    <img @click.stop="loadReviews(app.reviewsURL)" style="position: absolute" class="logo" :class="!hovering[app._id] ? 'hovering-logo' : ''" :src="app.logo.replace('s60', 's128')" :width="hovering[app._id] ? 96 : 48" alt="app icon" />
+                    <div v-if="index % 2 === 1" class="text-caption mt-16" :class="hovering[app._id] ? 'text-primary font-weight-bold pt-10' : ''" style="transition: all 0.5s ease-in-out">{{ app.name }}</div>
+                </div>
+            </v-btn>
+        </v-container>
     </v-container>
 </template>
 <style scoped>
 .v-sheet {
     background-color: rgba(255, 255, 255, 0.8);
+}
+.logo {
+    transition: all 0.5s ease-in-out;
+}
+.hovering-logo {
+    filter: grayscale(1);
+}
+.used-by-label {
+    position: fixed;
+    margin-bottom: 100px;
+    transform: rotate(-2deg);
 }
 </style>
 <script setup>
@@ -79,12 +102,15 @@ const { $api } = getCurrentInstance().appContext.config.globalProperties
 const store = useAppStore()
 const uuid = computed(() => store.url && uuidv5(store.url, uuidv5.URL))
 const app = ref()
+const apps = ref([])
 const loading = ref(false)
 const loaded = ref(false)
 const reviews = ref([])
 const windows = ref()
-const hovering = ref(false)
-const animationendEventListenerAdded = ref(false)
+const hovering = ref({
+    window: false,
+    menu: false
+})
 const filteredReviews = computed(() => reviews.value?.filter(reviewFilter))
 const limit = ref(20)
 const duration = ref(0)
@@ -109,29 +135,32 @@ async function submitHandler() {
         loading.value = false
     }
 }
+
 /**
 const test = async function() {
     store.url = `https://chromewebstore.google.com/detail/nodejs-v8-inspector-manag/gnhhdgbaldcilmgcpfddgdbkhjohddkj/reviews`
-    showSwal({ t: 1000 })
+    showSwal({ t: 2000 })
 }
 test()
 */
+
 function showSwal({ t = 2000 } = {}) {
     let timerInterval
 
-
     Swal.fire({
         title: `Your app has been added!`,
-        html: `<p class="mb-4">The ass 🕳️<span class="ml-n5">🕳️</span> are being wiped from ${app.value?.name || 'your'} reviews.</p>
-        <p style="display: none">I will close in <b></b> seconds.</p>`,
+        html: `<p class="mb-4">The ass 🕳️<span class="ml-n5">🕳️</span> are being wiped from ${app.value?.name || 'your'} reviews...</p>
+        <p class="timer-message" style="display: none">I will close in <b></b> seconds.</p>`,
         icon: 'success',
-        // footer: `<div id="swal-footer"></div>`,
         timer: t,
+        // footer: `<div id="swal-footer"></div>`,
         didOpen: async () => {
+            Swal.stopTimer()
+            Swal.showLoading()
             await until(
                 async () => {
                     try {
-                        const status = await $api.getStatus({ uuid: uuid.value })
+                        const status = await $api.getStatus({ uuid: uuid.value, cache: false })
                         return status?.reviews
                     } catch (error) {
                         console.log(error)
@@ -140,11 +169,12 @@ function showSwal({ t = 2000 } = {}) {
                 async () => await new Promise(resolve => setTimeout(resolve, 1000))
             )
 
-            Swal.showLoading()
+            Swal.resumeTimer()
+            Swal.getPopup().querySelector(".timer-message").style.display = 'inline-block'
+            
             let timer = Swal.getPopup().querySelector("b")
             timerInterval = setInterval(() => {
                 timer.textContent = `${(Swal.getTimerLeft() / 1000).toFixed(2)}`
-                timer.style.display = 'inline-block'
             }, 100)
         },
         willClose: () => {
@@ -153,24 +183,50 @@ function showSwal({ t = 2000 } = {}) {
     }).then(async (result) => {
         if (result.dismiss === Swal.DismissReason.timer) {
             console.log("I was closed by the timer")
-            loadReviews(store.url, uuid.value)
+            loadReviews(store.url)
         }
     })
 }
 function reviewFilter(review) {
     return review.rating >= 4
 }
-function openAppStore() {
-    console.log(app.value)
-    window.open(app.value.url, '_blank', 'noopener', 'noreferrer')
+function openAppStore(url) {
+    window.open(url || app.value.url, '_blank', 'noopener', 'noreferrer')
 }
-const loadReviews = async (url, uuid, index = 0) => {
+const loadApps = async (index = 0) => {
+    console.log('loading apps', index)
     loading.value = true
 
     try {
         let done = false
         while (!done) {
-            const iterator = $api.chunkedReviewsIterator(url, uuid, index, limit.value, store)
+            const iterator = $api.chunkedAppsIterator(index, limit.value)
+            const chunk = await iterator.next()
+
+            if (!chunk.done) {
+                if (chunk.value) {
+                    apps.value.push(...chunk.value)
+                    index += limit.value
+                }
+            } else {
+                done = true
+            }
+        }
+
+        loading.value = false
+    } catch (err) {
+        console.error(err)
+        loading.value = false
+    }
+}
+const loadReviews = async (url, index = 0) => {
+    console.log('loadReviews', url)
+    loading.value = true
+
+    try {
+        let done = false
+        while (!done) {
+            const iterator = $api.chunkedReviewsIterator(url, uuid.value, index, limit.value, store)
             const chunk = await iterator.next()
 
             if (!chunk.done) {
@@ -223,7 +279,7 @@ function resetTimeout(d = 5000) {
         ticks += 1
     }, tick)
     setTimeout(() => {
-        if (play.value && !hovering.value) {
+        if (play.value && !hovering.value.window) {
             windows.value += windows.value === filteredReviewsLength.value - 1 ? -(filteredReviewsLength.value - 1) : 1
         }
         clearInterval(progressBarTickInterval.value)
@@ -232,12 +288,13 @@ function resetTimeout(d = 5000) {
 }
 onMounted(() => {
     setApp()
+    loadApps()
     if (document.location.search.includes('url')) {
         store.url = decodeURIComponent(new URLSearchParams(document.location.search).get('url'))
-        loadReviews(store.url, uuid.value)
+        loadReviews(store.url)
     } else if (document.location.pathname === '/nim') {
         store.url = 'https://chromewebstore.google.com/detail/nodejs-v8-inspector-manag/gnhhdgbaldcilmgcpfddgdbkhjohddkj/reviews'
-        loadReviews(store.url, uuid.value)
+        loadReviews(store.url)
     }
     resetTimeout()
     document.ondblclick = e => {

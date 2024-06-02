@@ -85,6 +85,23 @@ export async function addReviewsToDB(_id, url, uuid, data) {
     return count
 }
 
+export async function addAppsToDB(apps) {
+    const db = await initDB()
+    const tx = db.transaction(appsStoreName, 'readwrite')
+    const storeApp = tx.objectStore(appsStoreName)
+
+    await Promise.all(apps.map(async app => {
+        const existingApp = await storeApp.get(app._id) || {}
+        const update = existingApp ? {
+            ...existingApp,
+            ...app,
+        } : app
+        storeApp.put(update)
+    }))
+
+    await tx.done
+}
+
 export async function clearDB() {
     const db = await initDB()
     return db.clear(appsStoreName)
