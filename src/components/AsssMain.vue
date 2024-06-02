@@ -45,7 +45,7 @@
             </div>
         </v-container>
         <v-spacer />
-        <v-container class="d-flex align-end justify-space-around mb-16">
+        <v-container v-if="window.self === window.top" class="d-flex align-end justify-space-around mb-16">
             <div class="used-by-label text-body-1">Used by:</div>
             <v-btn v-for="(app, index) of apps" :key="app.id" @click="openAppStore(app.reviewsURL)" class="text-decoration-none" variant="plain" rounded="xl" stacked flat :ripple="false" @mouseenter="hovering[app._id] = true" @mouseleave="hovering[app._id] = false">
                 <div class="d-flex flex-column align-center justify-center">
