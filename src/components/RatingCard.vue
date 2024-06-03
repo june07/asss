@@ -59,7 +59,8 @@ p.review-text {
 </style>
 <script setup>
 import 'animate.css'
-import { ref, onMounted, computed } from 'vue'
+import { onBeforeUnmount } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { useDisplay } from 'vuetify'
 
 const { smAndDown } = useDisplay()
@@ -73,6 +74,10 @@ const props = defineProps({
 })
 const reviewRef = ref()
 const durationMinusAnimationTime = computed(() => props.duration - 300)
+const scrolls = ref(0)
+const interval = ref()
+const scrollHeight = 100
+const autoScrolled = ref(0)
 
 function highlightWords() {
     const reviewContainer = reviewRef.value
@@ -91,6 +96,39 @@ onMounted(() => {
     const duration = Math.random() * (3 - 1) + 1
     let currentRating = 0
 
+    nextTick(() => {
+        const tempElement = document.createElement('p')
+        tempElement.style.position = 'absolute'
+        tempElement.style.visibility = 'hidden'
+        tempElement.style.height = 'auto'
+        tempElement.style.width = reviewRef.value.offsetWidth + 'px' // Use the same width as the original element
+        tempElement.style.whiteSpace = 'pre-wrap' // Match the white-space style
+        tempElement.className = reviewRef.value.className // Copy the class name for similar styling
+        tempElement.innerText = reviewRef.value.innerText // Copy the text content
+
+        // Append the temporary element to the body
+        document.body.appendChild(tempElement)
+
+        // Measure the height of the temporary element
+        const reviewHeight = tempElement.scrollHeight
+
+        // Remove the temporary element
+        document.body.removeChild(tempElement)
+
+        // Calculate the number of full scrolls needed
+        scrolls.value = Math.floor(reviewHeight / scrollHeight)
+
+        if (scrolls.value) {
+            interval.value = setInterval(() => {
+                reviewRef.value.scroll({ top: reviewRef.value.scrollTop + scrollHeight, behavior: 'smooth' })
+                autoScrolled.value += 1
+                if (autoScrolled.value === scrolls.value) {
+                    clearInterval(interval.value)
+                }
+            }, (props.duration / (scrolls.value + 1)))
+        }
+        // console.log('scrolls: ', scrolls.value, 'duration per scroll: ', (props.duration / (scrolls.value + 1)))
+    })
     // simple function to count with an easing function from currentRating to props.review.rating
     function count() {
         if (currentRating < props.review.rating) {
@@ -101,5 +139,8 @@ onMounted(() => {
     }
     count()
     highlightWords()
+})
+onBeforeUnmount(() => {
+    clearInterval(interval.value)
 })
 </script>
