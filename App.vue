@@ -2,7 +2,8 @@
     <v-app>
         <v-main>
             <v-container class="d-flex justify-center pa-0">
-                <asss-main v-if="authLoaded" :auth="auth" :hideFooter="hideFooter" :hideShare="hideShare" :hideCounter="hideCounter" @message="messageHandler" />
+                <FAQ v-if="/\/faq/.test(route.path)" />
+                <asss-main v-else-if="authLoaded" :auth="auth" :hideFooter="hideFooter" :hideShare="hideShare" :hideCounter="hideCounter" @message="messageHandler" @signin="signin" />
             </v-container>
         </v-main>
         <v-snackbar text :timeout="-1" v-model="snackbar.active" style="opacity: 0.9" @click="snackbarCloseHandler">
@@ -27,6 +28,7 @@
 import { ref, getCurrentInstance, onMounted, computed } from "vue"
 
 import AsssMain from "./src/components/AsssMain.vue"
+import FAQ from './src/components/FAQ.vue'
 
 const route = ref({})
 const auth = ref()

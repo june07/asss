@@ -4,7 +4,8 @@ export const useAppStore = defineStore("app", {
     state: () => ({
         url: undefined,
         appIdsToUUIDs: {},
-        jobs: {}
+        jobs: {},
+        faq: {},
     }),
     persist: true,
 })

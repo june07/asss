@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@highlightjs/vue-plugin": "^2.1.0",
+    "@tryghost/content-api": "^1.11.21",
     "animate.css": "^4.1.1",
     "async": "^3.2.5",
     "axios": "^1.6.8",
@@ -15,6 +16,8 @@
     "highlight.js": "^11.9.0",
     "idb": "^8.0.0",
     "keycloak-js": "^24.0.4",
+    "lru-cache": "^10.2.2",
+    "marked": "^12.0.2",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
     "sweetalert2": "^11.11.0",

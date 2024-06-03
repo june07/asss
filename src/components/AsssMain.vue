@@ -2,7 +2,7 @@
     <v-container style="height: 100vh" fluid v-show="loaded" class="d-flex align-center justify-center flex-column pa-0">
         <v-spacer v-if="!isIframed" />
         <div class="w-100 d-flex flex-column align-center justify-center" v-if="!isIframed && /\/$/.test(route.path)">
-            Add this widget to your own site:
+            <span v-if="!loading.reviews" class="text-body-1 font-weight-light">Showcase <span class="font-weight-medium">only your best<a href="/faq?category=general&id=665d0969b76fff0001ab6368" style="text-decoration: none;"><sup class="mr-n2 ml-n1">❓</sup></a></span> reviews by adding this widget to your own site:</span>
             <highlightjs style="max-width: 100%; text-wrap: pretty" language="html" :code="code" />
             <v-progress-circular style="position: absolute" v-show="loading.iframe" indeterminate color="primary" size="64" width="2">loading</v-progress-circular>
             <iframe @load="loading.iframe = false" ref="iframeRef" :key="highlightedApp?.appId || 'nim'" v-if="!loading.reviews" :src="iframeSrc" frameborder="0" width="100%" height="450"></iframe>
@@ -152,7 +152,7 @@ const code = computed(() => `<iframe :src="${iframeSrc.value.split('?')[0]}"></i
 async function submitHandler() {
     try {
         if (!props.auth?.token) {
-            emit('message', 'Please login to add reviews.')
+            emit('signin')
             return
         }
         loading.value.submit = true
