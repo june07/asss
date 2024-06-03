@@ -25,11 +25,14 @@
 <style scoped>
 </style>
 <script setup>
-import { ref, getCurrentInstance, onMounted, computed } from "vue"
+import { ref, getCurrentInstance, onMounted, computed, provide } from "vue"
+import { useDisplay } from "vuetify/lib/framework.mjs";
 
 import AsssMain from "./src/components/AsssMain.vue"
 import FAQ from './src/components/FAQ.vue'
 
+const isIframed = ref(false)
+const { smAndDown } = useDisplay()
 const route = ref({})
 const auth = ref()
 const { $api, $keycloak } = getCurrentInstance().appContext.config.globalProperties
@@ -104,6 +107,10 @@ checkVersion()
 versionCheckIntervalId.value = setInterval(checkVersion, 60000)
 doAuth()
 onMounted(() => {
+    isIframed.value = window !== window.top
+    if (isIframed.value) {
+        document.querySelector('html').style.overflow = 'hidden'
+    }
     route.value.path = window.location.pathname
     route.value.params = new URLSearchParams(window.location.search)
 
@@ -115,4 +122,5 @@ onMounted(() => {
         signin()
     }
 })
+provide('isIframed', isIframed)
 </script>

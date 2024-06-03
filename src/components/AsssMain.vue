@@ -1,10 +1,10 @@
 <template>
-    <v-container style="height: 100vh" fluid v-show="loaded" class="d-flex align-center justify-center flex-column pa-0">
-        <v-card v-if="!isIframed" flat class="text-center">
-            <v-card-title class="mb-n4">Remove AssS from your Reviews</v-card-title>
+    <v-container :style="smAndDown ? '' : 'height: 100vh'" fluid v-show="loaded" class="d-flex align-center justify-center flex-column pa-0">
+        <v-card v-if="!isIframed" flat class="text-center mb-8">
+            <v-card-title class="mb-n4">Remove Ass🕳️s from your Reviews</v-card-title>
             <v-card-subtitle>
                 <div class="text-caption">current support</div>
-                <v-btn href="https://chromewebstore.google.com/" target="_blank" rel="noopener"  variant="text" class="ml-2" size="x-small" text="Chrome Web Store">
+                <v-btn href="https://chromewebstore.google.com/" target="_blank" rel="noopener" variant="text" class="ml-2" size="x-small" text="Chrome Web Store">
                     <template v-slot:prepend>
                         <v-img width="16" src="/chrome-logo.svg"></v-img>
                     </template>
@@ -18,7 +18,7 @@
         </v-card>
         <v-spacer v-if="!isIframed" />
         <div class="w-100 d-flex flex-column align-center justify-center" v-if="!isIframed && /\/$/.test(route.path)">
-            <span v-if="!loading.reviews" class="font-weight-light px-4" :class="smAndDown ? 'text-body-2' : 'text-body-1'">Showcase <span class="font-weight-medium">only your best<a href="/faq?category=general&id=665d0969b76fff0001ab6368" style="text-decoration: none;"><sup class="mr-n2 ml-n1">❓</sup></a></span> reviews by adding this widget to your own page:</span>
+            <span v-if="!loading.reviews" class="font-weight-light px-4" :class="smAndDown ? 'text-body-2' : 'text-body-1'">Showcase <span class="font-weight-medium">only your best<a href="/faq?category=general&id=665d0969b76fff0001ab6368" style="text-decoration: none;"><sup class="mr-n2 ml-n1">❓</sup></a></span> reviews by adding this widget:</span>
             <highlightjs style="max-width: 100%; text-wrap: pretty; font-size: xx-small" :class="smAndDown ? '' : 'text-body-1'" language="html" :code="code" />
             <v-progress-circular style="position: absolute" v-show="loading.iframe" indeterminate color="primary" size="64" width="2">loading</v-progress-circular>
             <iframe @load="loading.iframe = false" ref="iframeRef" :key="highlightedApp?.appId || 'nim'" v-if="!loading.reviews" :src="iframeSrc" frameborder="0" width="100%" height="450"></iframe>
@@ -68,7 +68,7 @@
             </div>
         </v-container>
         <v-spacer v-if="!isIframed" />
-        <v-container v-if="!isIframed" class="d-flex align-end justify-space-around mb-16">
+        <v-container v-if="!isIframed" class="d-flex align-end pa-0" :class="smAndDown ? 'mt-16 justify-center' : 'mb-16 justify-space-around'">
             <div class="used-by-label text-overline" :class="smAndDown ? 'mobile' : ''">As used on</div>
             <v-btn v-for="(app, index) of apps" :key="app.id" @click="openAppStore(app.reviewsURL)" class="text-decoration-none" variant="plain" rounded="xl" stacked flat :ripple="false" @mouseenter="highlightedApp = app; hovering[app._id] = true" @mouseleave="hovering[app._id] = false">
                 <div class="d-flex flex-column align-center justify-center">
@@ -94,14 +94,15 @@
 }
 
 .used-by-label {
-    position: fixed;
+    position: absolute;
     margin-bottom: 100px;
     transform: rotate(-2deg);
     font-weight: bold;
 }
 
 .used-by-label.mobile {
-    margin-bottom: 60px;
+    position: absolute;
+    bottom: -40px;
 }
 
 .iframe-placeholder {
@@ -110,7 +111,7 @@
 </style>
 <script setup>
 import 'animate.css'
-import { ref, computed, onMounted, onBeforeUnmount, getCurrentInstance, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, getCurrentInstance, watch, inject } from 'vue'
 import { useAppStore } from '../store/app'
 import { useDisplay } from 'vuetify/lib/framework.mjs'
 import { v5 as uuidv5 } from 'uuid'
@@ -142,7 +143,7 @@ const aliases = {
 }
 const iframeRef = ref()
 const highlightedApp = ref()
-const isIframed = ref(false)
+const isIframed = inject('isIframed')
 const progressBarTickInterval = ref()
 const reviewReadTimer = ref(0)
 const pausedAtLeastOnce = ref(false)
@@ -363,7 +364,6 @@ async function loadAppWidget(loadingApps) {
     loadReviews(store.url)
 }
 onMounted(() => {
-    isIframed.value = window !== window.top
     if (iframeRef.value) {
         loading.value.iframe = true
     }

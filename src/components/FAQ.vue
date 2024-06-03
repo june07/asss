@@ -1,9 +1,9 @@
 <template>
-    <v-container class="h-100 d-flex align-center justify-center flex-column" :class="smAndDown ? 'px-1' : ''" fluid :style="smAndDown ? 'margin-top: 50px' : 'margin-top: 200px'">
-        <span class="mb-4" :class="smAndDown ? 'text-h6' : 'text-h4'">{{ smAndDown ? 'F.A.Q.' : 'Frequently Asked Questions' }}</span>
+    <v-container class="h-100 d-flex align-center justify-center flex-column" :class="smAndDown ? 'px-1' : ''" fluid>
+        <span :class="smAndDown ? 'text-h5' : 'text-h4'">{{ smAndDown ? 'F.A.Q.' : 'Frequently Asked Questions' }}</span>
         <v-responsive :width="smAndDown ? '100%' : '90%'" max-width="1200" class="mx-auto">
             <v-container class="mb-8" :class="smAndDown ? 'pa-0' : ''">
-                <v-btn rounded="xl" variant="text" class="mb-6 mt-n4 d-flex mx-auto text-body-2" href="https://github.com/june07/asss/discussions" target="_blank" text="Still have questions? Feel free to join the discussions!">
+                <v-btn rounded="xl" variant="text" class="mb-6 d-flex mx-auto text-body-2" :class="smAndDown ? '' : ' mt-n4'" href="https://github.com/june07/asss/discussions" target="_blank" text="Still have questions? Feel free to join the discussions!">
                     <template v-slot:prepend>
                         <v-icon color="grey-darken-2" icon="forum"></v-icon>
                     </template>
