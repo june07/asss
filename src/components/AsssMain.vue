@@ -309,7 +309,7 @@ function handleKeydown(event) {
 const filteredReviewsLength = computed(() => filteredReviews.value?.length || 0)
 function resetTimeout(d = 5000) {
     const wordsInNextReview = (filteredReviews.value[(windows?.value || 0) + 1]?.review.match(/\b\w+\b/g) || [])?.length
-    const nextDuration = Math.min(Math.max(wordsInNextReview * 200, 2000) || d, 11000)
+    const nextDuration = Math.min(Math.max(wordsInNextReview * 100, 2000) || d, 11000)
     // console.log(`${windows?.value} ${wordsInNextReview} words, ${nextDuration/1000}s`, filteredReviews.value[(windows?.value || 0) + 1]?.review)
 
     duration.value = d
