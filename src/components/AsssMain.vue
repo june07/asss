@@ -18,7 +18,7 @@
         <div class="w-100 d-flex align-center justify-center" v-if="app && reviews?.length && !hideShare">
             <social-share rounded />
         </div>
-        <v-window class="w-100" ref="windowRef" v-if="app && reviews?.length" show-arrows="hover" continuous v-model="windows" @mouseenter="hovering.window = true" @mouseleave="hovering.window = false">
+        <v-window class="w-100" ref="windowRef" v-if="app && filteredReviews?.length" show-arrows="hover" continuous v-model="windows" @mouseenter="hovering.window = true" @mouseleave="hovering.window = false">
             <v-window-item v-for="(review, index) of reviews.filter(reviewFilter)" :key="review._id">
                 <rating-card v-if="Math.abs(windows - index) <= 2" :active="windows === index" :review="review" :app="app" :progress="reviewReadTimer" :rotate="(windows || 1) * 10" :duration="duration" />
             </v-window-item>
@@ -83,6 +83,7 @@
     transform: rotate(-2deg);
     font-weight: bold;
 }
+
 .used-by-label.mobile {
     margin-bottom: 60px;
 }
@@ -296,7 +297,14 @@ const loadReviews = async (url, index = 0) => {
 }
 async function setApp() {
     if (!uuid.value) return
-    app.value = await getAppFromDB(uuid.value)
+    
+    await until(
+        async () => {
+            app.value = await getAppFromDB(uuid.value)
+            return app.value
+        },
+        async () => await new Promise(resolve => setTimeout(resolve, 500))
+    )
 }
 function handleKeydown(event) {
     if (event.key === 'ArrowRight') {
@@ -339,8 +347,12 @@ async function loadAppWidget(loadingApps) {
     loadReviews(store.url)
 }
 onMounted(() => {
-    setApp()
+    isIframed.value = window !== window.top
+    if (iframeRef.value) {
+        loading.value.iframe = true
+    }
     const loadingApps = loadApps()
+    setApp()
     route.value.path = document.location.pathname
     if (document.location.search.includes('url')) {
         store.url = decodeURIComponent(new URLSearchParams(document.location.search).get('url'))
@@ -356,8 +368,11 @@ onMounted(() => {
         }
     }
     document.addEventListener('keydown', handleKeydown)
+    setTimeout(() => {
+        loaded.value = true
+    }, 1000)
     watch(() => uuid.value, setApp)
-    watch(reviews.value, reviews => {
+    watch(() => reviews.value, reviews => {
         if (reviews?.length && !app.value) {
             setApp()
         }
@@ -365,13 +380,6 @@ onMounted(() => {
     watch(() => store.url, url => {
         loadReviews(url)
     })
-    setTimeout(() => {
-        loaded.value = true
-    }, 1000)
-    isIframed.value = window !== window.top
-    if (iframeRef.value) {
-        loading.value.iframe = true
-    }
     watch(() => iframeRef.value, iframe => {
         if (iframe) {
             loading.value.iframe = true
