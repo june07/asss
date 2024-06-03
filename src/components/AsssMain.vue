@@ -1,5 +1,21 @@
 <template>
     <v-container style="height: 100vh" fluid v-show="loaded" class="d-flex align-center justify-center flex-column pa-0">
+        <v-card v-if="!isIframed" flat class="text-center">
+            <v-card-title class="mb-n4">Remove AssS from your Reviews</v-card-title>
+            <v-card-subtitle>
+                <div class="text-caption">current support</div>
+                <v-btn href="https://chromewebstore.google.com/" target="_blank" rel="noopener"  variant="text" class="ml-2" size="x-small" text="Chrome Web Store">
+                    <template v-slot:prepend>
+                        <v-img width="16" src="/chrome-logo.svg"></v-img>
+                    </template>
+                </v-btn>
+                <v-btn href="https://microsoftedge.microsoft.com/addons/Microsoft-Edge-Extensions-Home" target="_blank" rel="noopener" variant="text" class="ml-2" size="x-small" text="Edge Add-ons (soon)">
+                    <template v-slot:prepend>
+                        <v-img width="16" style="filter: grayscale(1)" src="/Microsoft_Edge_logo_(2019).svg"></v-img>
+                    </template>
+                </v-btn>
+            </v-card-subtitle>
+        </v-card>
         <v-spacer v-if="!isIframed" />
         <div class="w-100 d-flex flex-column align-center justify-center" v-if="!isIframed && /\/$/.test(route.path)">
             <span v-if="!loading.reviews" class="font-weight-light px-4" :class="smAndDown ? 'text-body-2' : 'text-body-1'">Showcase <span class="font-weight-medium">only your best<a href="/faq?category=general&id=665d0969b76fff0001ab6368" style="text-decoration: none;"><sup class="mr-n2 ml-n1">❓</sup></a></span> reviews by adding this widget to your own page:</span>
@@ -297,7 +313,7 @@ const loadReviews = async (url, index = 0) => {
 }
 async function setApp() {
     if (!uuid.value) return
-    
+
     await until(
         async () => {
             app.value = await getAppFromDB(uuid.value)
