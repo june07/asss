@@ -2,17 +2,18 @@
     <v-container style="height: 100vh" fluid v-show="loaded" class="d-flex align-center justify-center flex-column pa-0">
         <v-spacer v-if="!isIframed" />
         <div class="w-100 d-flex flex-column align-center justify-center" v-if="!isIframed && /\/$/.test(route.path)">
-            <span v-if="!loading.reviews" class="text-body-1 font-weight-light">Showcase <span class="font-weight-medium">only your best<a href="/faq?category=general&id=665d0969b76fff0001ab6368" style="text-decoration: none;"><sup class="mr-n2 ml-n1">❓</sup></a></span> reviews by adding this widget to your own site:</span>
-            <highlightjs style="max-width: 100%; text-wrap: pretty" language="html" :code="code" />
+            <span v-if="!loading.reviews" class="font-weight-light px-4" :class="smAndDown ? 'text-body-2' : 'text-body-1'">Showcase <span class="font-weight-medium">only your best<a href="/faq?category=general&id=665d0969b76fff0001ab6368" style="text-decoration: none;"><sup class="mr-n2 ml-n1">❓</sup></a></span> reviews by adding this widget to your own page:</span>
+            <highlightjs style="max-width: 100%; text-wrap: pretty; font-size: xx-small" :class="smAndDown ? '' : 'text-body-1'" language="html" :code="code" />
             <v-progress-circular style="position: absolute" v-show="loading.iframe" indeterminate color="primary" size="64" width="2">loading</v-progress-circular>
             <iframe @load="loading.iframe = false" ref="iframeRef" :key="highlightedApp?.appId || 'nim'" v-if="!loading.reviews" :src="iframeSrc" frameborder="0" width="100%" height="450"></iframe>
         </div>
-        <div class="w-100 d-flex align-center justify-center" v-if="loaded && !reviews?.length">
-            <v-text-field variant="outlined" v-model="store.url" hide-details="auto" persistent-hint label="Web Store Reviews URL">
-                <template v-slot:append-inner>
+        <div class="w-100 d-flex flex-column align-center justify-center" v-if="loaded && !reviews?.length">
+            <v-text-field class="w-100 px-4" @keydown.enter="submitHandler" variant="outlined" v-model="store.url" hide-details="auto" persistent-hint label="Web Store Reviews URL">
+                <template v-if="!smAndDown" v-slot:append-inner>
                     <v-btn @click="submitHandler" text="add" flat variant="tonal" :loading="loading.submit" />
                 </template>
             </v-text-field>
+            <v-btn v-if="smAndDown" @click="submitHandler" text="add" flat variant="tonal" :loading="loading.submit" rounded="lg" class="mt-2" />
         </div>
         <div class="w-100 d-flex align-center justify-center" v-if="app && reviews?.length && !hideShare">
             <social-share rounded />
@@ -40,9 +41,9 @@
                 <v-avatar size="64" class="app-logo">
                     <v-img :src="app.logo?.replace('s60', 's128')" alt="app icon" />
                 </v-avatar>
-                <div class="text-h6">{{ app.name }}</div>
+                <div :class="smAndDown ? 'text-body-2' : 'text-h6'">{{ app.name }}</div>
             </div>
-            <div class="subtitle d-flex align-center mt-n2">
+            <div class="d-flex align-center mt-n2" :class="smAndDown ? 'text-body-2' : 'text-body-1'">
                 <div class="ml-2 d-flex align-center">{{ app.score }}<v-icon icon="star" color="yellow" /></div>
                 <div class="ml-2">({{ app.ratings }} ratings)</div>
                 <div class="ml-2">
@@ -52,12 +53,12 @@
         </v-container>
         <v-spacer v-if="!isIframed" />
         <v-container v-if="!isIframed" class="d-flex align-end justify-space-around mb-16">
-            <div class="used-by-label text-overline">As used on</div>
+            <div class="used-by-label text-overline" :class="smAndDown ? 'mobile' : ''">As used on</div>
             <v-btn v-for="(app, index) of apps" :key="app.id" @click="openAppStore(app.reviewsURL)" class="text-decoration-none" variant="plain" rounded="xl" stacked flat :ripple="false" @mouseenter="highlightedApp = app; hovering[app._id] = true" @mouseleave="hovering[app._id] = false">
                 <div class="d-flex flex-column align-center justify-center">
-                    <div v-if="index % 2 === 0" class="text-caption mb-16" :class="hovering[app._id] ? 'text-primary font-weight-bold pb-10' : ''" style="transition: all 0.5s ease-in-out">{{ app.name }}</div>
-                    <img @click.stop="store.url = app.reviewsURL" style="position: absolute" class="logo" :class="!hovering[app._id] ? 'hovering-logo' : ''" :src="app.logo.replace('s60', 's128')" :width="hovering[app._id] ? 96 : 48" alt="app icon" />
-                    <div v-if="index % 2 === 1" class="text-caption mt-16" :class="hovering[app._id] ? 'text-primary font-weight-bold pt-10' : ''" style="transition: all 0.5s ease-in-out">{{ app.name }}</div>
+                    <div v-if="!smAndDown && index % 2 === 0" class="text-caption mb-16" :class="hovering[app._id] ? 'text-primary font-weight-bold pb-10' : ''" style="transition: all 0.5s ease-in-out">{{ app.name }}</div>
+                    <img @click.stop="store.url = app.reviewsURL" style="position: absolute" class="logo" :class="!hovering[app._id] && !smAndDown ? 'hovering-logo' : ''" :src="app.logo.replace('s60', 's128')" :width="hovering[app._id] ? 96 : 48" alt="app icon" />
+                    <div v-if="!smAndDown && index % 2 === 1" class="text-caption mt-16" :class="hovering[app._id] ? 'text-primary font-weight-bold pt-10' : ''" style="transition: all 0.5s ease-in-out">{{ app.name }}</div>
                 </div>
             </v-btn>
         </v-container>
@@ -82,6 +83,9 @@
     transform: rotate(-2deg);
     font-weight: bold;
 }
+.used-by-label.mobile {
+    margin-bottom: 60px;
+}
 
 .iframe-placeholder {
     background: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 100% 100%"><text fill="%23FF0000" x="50%" y="50%" font-family="\'Lucida Grande\', sans-serif" font-size="24" text-anchor="middle">PLACEHOLDER</text></svg>') 0px 0px no-repeat;
@@ -91,6 +95,7 @@
 import 'animate.css'
 import { ref, computed, onMounted, onBeforeUnmount, getCurrentInstance, watch } from 'vue'
 import { useAppStore } from '../store/app'
+import { useDisplay } from 'vuetify/lib/framework.mjs'
 import { v5 as uuidv5 } from 'uuid'
 import NumberAnimation from "vue-number-animation"
 import { until } from 'async'
@@ -103,6 +108,7 @@ import { getAppFromDB } from '../plugins/indexedDb.plugin'
 import RatingCard from './RatingCard.vue'
 import SocialShare from './SocialShare.vue'
 
+const { smAndDown } = useDisplay()
 const highlightjs = hljsVuePlugin.component
 const emit = defineEmits(['message'])
 const route = ref({})
