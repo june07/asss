@@ -24,6 +24,7 @@
             <iframe @load="loading.iframe = false" ref="iframeRef" :key="highlightedApp?.appId || 'nim'" v-if="!loading.reviews" :src="iframeSrc" frameborder="0" width="100%" height="450"></iframe>
         </div>
         <div class="w-100 d-flex flex-column align-center justify-center" v-if="loaded && !reviews?.length">
+            <span class="text-caption font-weight-bold my-2">Add your extension now for free!</span>
             <v-text-field class="w-100 px-4" @keydown.enter="submitHandler" variant="outlined" v-model="store.url" hide-details="auto" persistent-hint label="Web Store Reviews URL">
                 <template v-if="!smAndDown" v-slot:append-inner>
                     <v-btn @click="submitHandler" text="add" flat variant="tonal" :loading="loading.submit" />
@@ -70,7 +71,7 @@
         <v-spacer v-if="!isIframed" />
         <v-container v-if="!isIframed" class="d-flex align-end pa-0" :class="smAndDown ? 'mt-16 justify-center' : 'mb-16 justify-space-around'">
             <div class="used-by-label text-overline" :class="smAndDown ? 'mobile' : ''">As used on</div>
-            <v-btn v-for="(app, index) of apps" :key="app.id" @click="openAppStore(app.reviewsURL)" class="text-decoration-none" variant="plain" rounded="xl" stacked flat :ripple="false" @mouseenter="highlightedApp = app; hovering[app._id] = true" @mouseleave="hovering[app._id] = false">
+            <v-btn v-for="(app, index) of randomApps" :key="app.id" @click="openAppStore(app.reviewsURL)" class="text-decoration-none" variant="plain" rounded="xl" stacked flat :ripple="false" @mouseenter="highlightedApp = app; hovering[app._id] = true" @mouseleave="hovering[app._id] = false">
                 <div class="d-flex flex-column align-center justify-center">
                     <div v-if="!smAndDown && index % 2 === 0" class="text-caption mb-16" :class="hovering[app._id] ? 'text-primary font-weight-bold pb-10' : ''" style="transition: all 0.5s ease-in-out">{{ app.name }}</div>
                     <img @click.stop="store.url = app.reviewsURL" style="position: absolute" class="logo" :class="!hovering[app._id] && !smAndDown ? 'hovering-logo' : ''" :src="app.logo.replace('s60', 's128')" :width="hovering[app._id] ? 96 : 48" alt="app icon" />
@@ -152,6 +153,19 @@ const store = useAppStore()
 const uuid = computed(() => store.url && uuidv5(store.url, uuidv5.URL))
 const app = ref()
 const apps = ref([])
+const randomApps = computed(() => {
+    // Clone the array to avoid mutating the original one
+    const appsClone = [...apps.value]
+
+    // Shuffle the cloned array
+    for (let i = appsClone.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [appsClone[i], appsClone[j]] = [appsClone[j], appsClone[i]]
+    }
+
+    // Return the first `maxItems` elements from the shuffled array
+    return appsClone.slice(0, smAndDown.value ? 3 : 7)
+})
 const loading = ref({
     submit: false,
     reviews: false,
