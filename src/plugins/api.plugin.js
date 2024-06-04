@@ -62,7 +62,7 @@ const apiService = () => {
         }
     }
     const cacheless = {
-        getApps: async ({ limit, offset = 0, cache }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss/apps?limit=${limit || 10}&offset=${offset}`, cache }),
+        getApps: async ({ limit, offset = 0, cache }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss/apps?limit=${limit || 10}&offset=${offset}${cache !== undefined && !cache ? '&nocache=true' : ''}`, cache }),
         postApp: async ({ auth, url }) => await request({ auth, method: 'POST', url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}` }),
         getStatus: async ({ uuid, cache }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss/status/${uuid}`, cache }),
         getReviews: async ({ url, limit, offset = 0 }) => await request({ url: `${VITE_APP_API_SERVER}/v1/asss?url=${url}&limit=${limit || 10}&offset=${offset}` }),

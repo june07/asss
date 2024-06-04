@@ -73,9 +73,9 @@
             <div class="used-by-label text-overline" :class="smAndDown ? 'mobile' : ''">As used on</div>
             <v-btn v-for="(app, index) of randomApps" :key="app.id" @click="openAppStore(app.reviewsURL)" class="text-decoration-none" variant="plain" rounded="xl" stacked flat :ripple="false" @mouseenter="highlightedApp = app; hovering[app._id] = true" @mouseleave="hovering[app._id] = false">
                 <div class="d-flex flex-column align-center justify-center">
-                    <div v-if="!smAndDown && index % 2 === 0" class="text-caption mb-16" :class="hovering[app._id] ? 'text-primary font-weight-bold pb-10' : ''" style="transition: all 0.5s ease-in-out">{{ app.name }}</div>
+                    <div v-if="!smAndDown && index % 2 === 0" class="text-caption mb-16" :class="hovering[app._id] ? 'text-primary font-weight-bold pb-16' : ''" style="transition: all 0.5s ease-in-out">{{ app.name }}</div>
                     <img @click.stop="store.url = app.reviewsURL" style="position: absolute" class="logo" :class="!hovering[app._id] && !smAndDown ? 'hovering-logo' : ''" :src="app.logo.replace('s60', 's128')" :width="hovering[app._id] ? 96 : 48" alt="app icon" />
-                    <div v-if="!smAndDown && index % 2 === 1" class="text-caption mt-16" :class="hovering[app._id] ? 'text-primary font-weight-bold pt-10' : ''" style="transition: all 0.5s ease-in-out">{{ app.name }}</div>
+                    <div v-if="!smAndDown && index % 2 === 1" class="text-caption mt-16" :class="hovering[app._id] ? 'text-primary font-weight-bold pt-16' : ''" style="transition: all 0.5s ease-in-out">{{ app.name }}</div>
                 </div>
             </v-btn>
         </v-container>
