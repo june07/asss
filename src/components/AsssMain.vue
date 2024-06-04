@@ -33,7 +33,7 @@
             <v-btn v-if="smAndDown" @click="submitHandler" text="add" flat variant="tonal" :loading="loading.submit" rounded="lg" class="mt-2" />
         </div>
         <div class="w-100 d-flex align-center justify-center" v-if="app && reviews?.length && !hideShare">
-            <social-share rounded />
+            <social-share rounded :url="`${route.origin}/app/${app.appId}`" />
         </div>
         <v-window class="w-100" ref="windowRef" v-if="app && filteredReviews?.length" show-arrows="hover" continuous v-model="windows" @mouseenter="hovering.window = true" @mouseleave="hovering.window = false">
             <v-window-item v-for="(review, index) of reviews.filter(reviewFilter)" :key="review._id">
@@ -383,6 +383,7 @@ onMounted(() => {
     }
     const loadingApps = loadApps()
     setApp()
+    route.value.origin = document.location.origin
     route.value.path = document.location.pathname
     if (document.location.search.includes('url')) {
         store.url = decodeURIComponent(new URLSearchParams(document.location.search).get('url'))

@@ -9,7 +9,10 @@
         </template>
         <v-list class="rounded-xl">
             <v-list-item v-for="shareType in shareTypes" :key="shareType.network" density="compact">
-                <ShareNetwork :url="url" :network="shareType.network" :title="title" :description="description" :quote="quote" :hashtags="hashtags" :twitterUser="twitterUser" class="d-flex">
+                <div style="cursor: pointer" v-if="/copy/.test(shareType.network)" @click="() => clickHandler(shareType)">
+                    <v-icon :icon="shareType.icon" class="mr-2"></v-icon>{{ shareType.title }}
+                </div>
+                <ShareNetwork v-else :url="url" :network="shareType.network" :title="title" :description="description" :quote="quote" :hashtags="hashtags" :twitterUser="twitterUser" class="d-flex">
                     <v-icon class="mr-2" :color="shareType.color">
                         <v-icon v-if="shareType.icon" size="x-small" :icon="shareType.icon" />
                         <v-img v-else src="/asss.svg" class="mr-2" height="32" width="32"></v-img>
@@ -26,9 +29,10 @@ a {
 }
 </style>
 <script setup>
-import { ref, mergeProps, watch, onMounted } from 'vue'
+import { ref, mergeProps, watch, onMounted, inject } from 'vue'
 import { ShareNetwork } from 'vue-social-sharing'
 
+const emit = defineEmits(['copy'])
 const menu = ref()
 const tooltips = ref({
     share: false
@@ -64,6 +68,11 @@ const props = defineProps({
 })
 const twitterUser = "june07"
 const shareTypes = [
+    {
+        network: "copy",
+        title: "Copy Link",
+        icon: "content_copy",
+    },
     {
         network: "email",
         title: "Email",
@@ -206,7 +215,23 @@ const shareTypes = [
 ]
     .filter(shareType => !props.disabled?.includes(shareType.network))
     .filter(shareType => !(shareType.network === 'tab' && props.url !== document.location.href))
-
+function copyHandler() {
+    emit('copy')
+    tooltips.value['share'] = true
+    clipboard.copy(props.url)
+    setTimeout(() => {
+        tooltips.value['share'] = false
+    }, 500)
+}
+function clickHandler(shareType) {
+    if (shareType.network === 'copy') {
+        copyHandler()
+    } else if (shareType.network === 'tab') {
+        const newWindow = window.open(props.url, '_blank')
+        newWindow.opener = null
+    }
+}
+const clipboard = inject('clipboard')
 onMounted(() => {
     watch(() => props.modelValue, modelValue => {
         menu.value = modelValue
