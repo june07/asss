@@ -9,7 +9,7 @@
             <v-card-text class="text-body-1 pt-1">
                 <div class="d-flex align-center">{{ review.rating }} out of 5
                     <v-rating v-model="rating" half-increments density="compact" class="ml-2" active-color="yellow" color="yellow-accent-2" />
-                    <v-avatar size="64" class="app-logo">
+                    <v-avatar :size="smAndDown ? 48 : 64" class="app-logo">
                         <v-img :src="app.logo.replace('s60', 's128')" alt="app icon" />
                     </v-avatar>
                 </div>
@@ -25,6 +25,11 @@
 .app-logo {
     position: absolute;
     right: -32px;
+    opacity: 0.8;
+}
+.mobile .app-logo {
+    position: absolute;
+    right: -24px;
 }
 
 p.review-text {
@@ -38,6 +43,16 @@ p.review-text {
     right: 64px;
     width: 128px;
     height: 128px;
+    border-radius: 50%;
+    z-index: 999;
+    opacity: 0.8;
+}
+.mobile .rounded-circle {
+    position: absolute;
+    top: -48px;
+    right: 48px;
+    width: 96px;
+    height: 96px;
     border-radius: 50%;
     z-index: 999;
 }
