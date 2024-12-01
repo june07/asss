@@ -4,8 +4,8 @@
             <v-container class="h-100 d-flex justify-center pa-0">
                 <FAQ v-if="isValidRoute && /\/faq/.test(route.path)" />
                 <asss-main v-else-if="authLoaded && isValidRoute" :auth="auth" :hideFooter="hideFooter" :hideShare="hideShare" :hideCounter="hideCounter" @message="messageHandler" @signin="signin" />
-                <div v-else-if="!isValidRoute" class="text-h1 h-100 d-flex align-center">
-                    404
+                <div v-else-if="!isValidRoute" class="text-h1 h-100 d-flex flex-column justify-center align-center">
+                    404<div class="text-caption text-white">1e5406d2-e16d-4929-8e37-a0a9e5d917b3</div>
                 </div>
             </v-container>
         </v-main>
