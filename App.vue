@@ -1,9 +1,12 @@
 <template>
     <v-app>
         <v-main>
-            <v-container class="d-flex justify-center pa-0">
-                <FAQ v-if="/\/faq/.test(route.path)" />
-                <asss-main v-else-if="authLoaded" :auth="auth" :hideFooter="hideFooter" :hideShare="hideShare" :hideCounter="hideCounter" @message="messageHandler" @signin="signin" />
+            <v-container class="h-100 d-flex justify-center pa-0">
+                <FAQ v-if="isValidRoute && /\/faq/.test(route.path)" />
+                <asss-main v-else-if="authLoaded && isValidRoute" :auth="auth" :hideFooter="hideFooter" :hideShare="hideShare" :hideCounter="hideCounter" @message="messageHandler" @signin="signin" />
+                <div v-else-if="!isValidRoute" class="text-h1 h-100 d-flex align-center">
+                    404
+                </div>
             </v-container>
         </v-main>
         <v-snackbar text :timeout="-1" v-model="snackbar.active" style="opacity: 0.9" @click="snackbarCloseHandler">
@@ -52,6 +55,8 @@ const authLoaded = ref(false)
 const hideFooter = computed(() => !(!route.value.params?.get('hideFooter') || ['0', 0, 'false', false].includes(route.value.params?.get('hideFooter'))))
 const hideCounter = computed(() => !(!route.value.params?.get('hideCounter') || ['0', 0, 'false', false].includes(route.value.params?.get('hideCounter'))))
 const hideShare = computed(() => !(!route.value.params?.get('hideShare') || ['0', 0, 'false', false].includes(route.value.params?.get('hideShare'))))
+const isValidRoute = computed(() => !isLoaded.value || new RegExp(/\/(|(app|faq).*)$/).test(route.value.path))
+const isLoaded = ref(false)
 
 const checkVersion = async () => {
     buildInfo.value = await $api.buildInfo()
@@ -78,7 +83,6 @@ function snackbarCloseHandler() {
     })
 }
 function messageHandler(message) {
-    debugger
     snackbar.value = {
         ...snackbarDefault,
         active: true,
@@ -121,6 +125,8 @@ onMounted(() => {
     } else if (/\/signin/.test(route.value.path)) {
         signin()
     }
+
+    setTimeout(() => isLoaded.value = true, 3000)
 })
 provide('isIframed', isIframed)
 </script>
